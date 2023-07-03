@@ -38,3 +38,4 @@ def plot_lines(lines, title='Gráfico de Linhas', xlabel='x', ylabel='y'):
 
     fig = go.Figure(data=plot_data, layout=layout)
     fig.show()
+   

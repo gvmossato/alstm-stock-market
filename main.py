@@ -66,9 +66,9 @@ plot_lines(
             'label': 'Predição',
         },
     ],
-    "Resultados dataset de treino",
+    "Resultados no Dataset de Treino",
     "Data",
-    "Preço"
+    "Preço",
 )
 
 plot_lines(
@@ -84,7 +84,20 @@ plot_lines(
             'label': 'Predição',
         },
     ],
-    "Resultados dataset de teste",
+    "Resultados no Dataset de Teste",
     "Data",
-    "Preço"
+    "Preço",
 )
+
+# Avaliation
+
+metrics = model.avaliate(
+    pre.reverse_normalize(pre.y_test, p.target),
+    pre.reverse_normalize(test_pred, p.target),
+)
+
+print("\nAvaliação dos Resultados:")
+print("Raiz do Erro Quadrático Médio:", metrics['rmse'])
+print("Erro Absoluto Médio:", metrics['mae'])
+print("R²:", metrics['r2'])
+print("Tracking Error:", metrics['te'])

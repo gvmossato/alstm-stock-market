@@ -1,3 +1,4 @@
+import numpy as np
 import tensorflow.keras.backend as K
 
 from tensorflow.keras.models import Sequential
@@ -59,3 +60,22 @@ class Model:
 
     def predict(self, X):
         return self.model.predict(X, batch_size=self.batch_size).flatten()
+
+    def avaliate(self, y, y_pred):
+        def rmse(y, yhat): return np.sqrt(np.sum((y - yhat)**2) / len(y))
+        def mae(y, yhat): return np.sum(np.abs(y - yhat)) / len(y)
+        def r2(y, yhat): return 1 - np.sum((y - yhat)**2) / np.sum((y - np.mean(y))**2)
+        def ret(p): return np.diff(p) / p[:-1]
+
+        def te(y, yhat):
+            y_ret = ret(y)
+            yhat_ret = ret(yhat)
+            n = len(y_ret)
+            return np.sqrt(np.sum((y_ret - yhat_ret)**2) / (n - 1))
+
+        return {
+            "rmse": rmse(y, y_pred),
+            "mae": mae(y, y_pred),
+            "r2": r2(y, y_pred),
+            "te": te(y, y_pred),
+        }
