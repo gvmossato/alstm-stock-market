@@ -1,9 +1,8 @@
-from src.utils import plot_lines
 import src.params as p
 
 from src.model import Model
 from src.data import Preprocessor
-
+from src.utils import plot_lines
 
 # ==== #
 # Data #
