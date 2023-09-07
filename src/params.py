@@ -1,12 +1,12 @@
 # Market Data
-ticker = '^GSPC'
-start = '1983-01-03'
-end = '2023-05-02'
-target = 'Close'
+ticker = "^GSPC"
+start = "1983-01-03"
+end = "2023-05-02"
+target = "Close"
 
 # Wavelet Transform
-wavelet = 'coif3'
-mode = 'symmetric'
+wavelet = "coif3"
+mode = "symmetric"
 levels = 3
 keep_levels = 1
 
