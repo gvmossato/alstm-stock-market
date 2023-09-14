@@ -1,74 +1,118 @@
 import numpy as np
 import tensorflow.keras.backend as K
-
+from scikeras.wrappers import KerasRegressor
+from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
+from tensorflow.keras.layers import LSTM, Dense, Dropout, Input, Layer
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Layer, Input, Dense, LSTM, Dropout
 from tensorflow.keras.optimizers import Adam
 
+import src.params as p
+from src.utils import now, save_dict
 
-# Custom Attention Layer
+
+def create_model(learning_rate, hidden_state_size):
+    model = Sequential()
+    model.add(Input(shape=(p.time_step, p.num_features)))
+    model.add(LSTM(hidden_state_size, return_sequences=True))
+    model.add(SoftmaxAttention())
+    model.add(Dropout(0.2))
+    model.add(Dense(1, activation="linear"))
+
+    optimizer = Adam(learning_rate=learning_rate)
+
+    model.compile(optimizer=optimizer, loss=p.loss_function)
+    return model
+
+
 class SoftmaxAttention(Layer):
     def __init__(self, **kwargs):
         super(SoftmaxAttention, self).__init__(**kwargs)
 
     def build(self, input_shape):
-        self.attention = Dense(1, activation="tanh")
+        self.W_Q = self.add_weight(
+            shape=(input_shape[-1], input_shape[-1]),
+            initializer="glorot_uniform",
+            trainable=True,
+        )
+        self.W_K = self.add_weight(
+            shape=(input_shape[-1], input_shape[-1]),
+            initializer="glorot_uniform",
+            trainable=True,
+        )
+        self.W_V = self.add_weight(
+            shape=(input_shape[-1], input_shape[-1]),
+            initializer="glorot_uniform",
+            trainable=True,
+        )
         super(SoftmaxAttention, self).build(input_shape)
 
     def call(self, x):
-        logits = self.attention(x)
-        x_shape = K.shape(x)
-        logits = K.reshape(logits, shape=(x_shape[0], x_shape[1]))
-        ai = K.exp(logits - K.max(logits, axis=-1, keepdims=True))
+        Q = K.dot(x, self.W_Q)
+        K_mat = K.dot(x, self.W_K)
+        V = K.dot(x, self.W_V)
 
-        attention_weights = ai / (K.sum(ai, axis=1, keepdims=True) + K.epsilon())
-        attention_weights = K.expand_dims(attention_weights)
-        weighted_input = x * attention_weights
-        result = K.sum(weighted_input, axis=1)
-        return result
+        QK = K.batch_dot(Q, K.permute_dimensions(K_mat, (0, 2, 1)))
+        d_k = K.int_shape(Q)[-1]
+        scaled_attention_logits = QK / K.sqrt(K.cast(d_k, dtype=K.floatx()))
+
+        attention_weights = K.softmax(scaled_attention_logits, axis=-1)
+        weighted_sum = K.batch_dot(attention_weights, V)
+        return K.sum(weighted_sum, axis=1)
 
     def compute_output_shape(self, input_shape):
-        return [input_shape[0], input_shape[-1]]
+        return (input_shape[0], input_shape[-1])
 
 
 class Model:
-    def __init__(
-        self,
-        epochs,
-        num_features,
-        time_step,
-        learning_rate,
-        hidden_state_size,
-        batch_size,
-    ):
-        self.epochs = epochs
-        self.batch_size = batch_size
+    def __init__(self):
+        self.model = create_model(p.learning_rate, p.hidden_state_size)
 
-        self.model = Sequential()
-        self.model.add(Input(shape=(time_step, num_features)))
-        self.model.add(LSTM(hidden_state_size, return_sequences=True))
-        self.model.add(SoftmaxAttention())
-        self.model.add(Dropout(0.2))
-        self.model.add(Dense(1, activation="linear"))
-
-        self.optimizer = Adam(learning_rate=learning_rate)
-
-        self.model.compile(optimizer=self.optimizer, loss="mean_squared_error")
-
-    def fit(self, X_train, y_train, X_test, y_test):
+    def fit(self, X_train, y_train, X_validation, y_validation):
         self.model.fit(
             X_train,
             y_train,
-            epochs=self.epochs,
-            batch_size=self.batch_size,
-            validation_data=(X_test, y_test),
+            epochs=p.epochs,
+            batch_size=p.batch_size,
+            validation_data=(X_validation, y_validation),
+            validation_freq=1,
+            shuffle=False,
             verbose=1,
         )
 
-    def predict(self, X):
-        return self.model.predict(X, batch_size=self.batch_size).flatten()
+    def grid_search_optimization(self, X_train, y_train, param_grid):
+        estimator = KerasRegressor(
+            model=create_model,
+            epochs=p.epochs,
+            loss=p.loss_function,
+            shuffle=False,
+            verbose=0,
+        )
 
-    def avaliate(self, y, y_pred):
+        grid = GridSearchCV(
+            estimator=estimator,
+            scoring=f"neg_{p.loss_function}",
+            param_grid=param_grid,
+            n_jobs=-1,
+            cv=TimeSeriesSplit(n_splits=3),
+        )
+        grid_result = grid.fit(X_train, y_train)
+
+        print(
+            f"Melhor score ({grid_result.best_score_}) utilizando: {grid_result.best_params_}"
+        )
+        save_dict(
+            f"./logs/{now()}_GridSearch_best_params.txt",
+            grid_result.best_params_,
+        )
+        save_dict(
+            f"./logs/{now()}_GridSearch_results.txt",
+            grid_result.cv_results_,
+        )
+
+    def predict(self, X):
+        return self.model.predict(X, batch_size=p.batch_size).flatten()
+
+    def evaluate(self, y, y_pred):
         def rmse(y, yhat):
             return np.sqrt(np.sum((y - yhat) ** 2) / len(y))
 
@@ -87,9 +131,12 @@ class Model:
             n = len(y_ret)
             return np.sqrt(np.sum((y_ret - yhat_ret) ** 2) / (n - 1))
 
-        return {
+        metrics = {
             "rmse": rmse(y, y_pred),
             "mae": mae(y, y_pred),
             "r2": r2(y, y_pred),
             "te": te(y, y_pred),
         }
+
+        save_dict(f"./logs/{now()}_metrics.txt", metrics)
+        return metrics

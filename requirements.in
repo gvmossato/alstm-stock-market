@@ -1,0 +1,10 @@
+pandas
+plotly
+tensorflow
+scikit-learn
+scikeras
+PyWavelets
+yfinance
+kaleido
+black
+isort

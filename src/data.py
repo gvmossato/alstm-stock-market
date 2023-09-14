@@ -1,37 +1,50 @@
-import yfinance as yf
-import pandas as pd
 import numpy as np
+import pandas as pd
 import pywt
+import yfinance as yf
 
 
 class Preprocessor:
     def get_data(self, ticker, start, end, target_column):
-        self.data = yf.download(ticker, start=start, end=end)
+        self.data = yf.download(ticker, start=start, end=end).dropna()
         self.dates = self.data.index
         self.target_column_idx = np.where(self.data.columns == target_column)[0][0]
 
-    def denoise_data(self, wavelet, mode, levels, keep_levels):
+    def denoise_data(
+        self,
+        wavelet,
+        wavelet_mode,
+        levels,
+        shrink_coeffs,
+        threshold_mode,
+    ):
+        def calc_universal_threshold(finnest_coeffs):
+            sigma = np.std(finnest_coeffs)
+            n = len(finnest_coeffs)
+            return sigma * np.sqrt(2 * np.log(n))
+
         data_transformed = pd.DataFrame(
             index=self.data.index,
             columns=self.data.columns,
         )
 
         for col in self.data.columns:
-            coeffs = pywt.wavedec(self.data[col], wavelet, mode, level=levels)
+            coeffs = pywt.wavedec(self.data[col], wavelet, wavelet_mode, level=levels)
 
-            # Zero out details coefficients
-            for i in range(keep_levels, levels):
-                coeffs[i] = np.zeros(coeffs[i].shape)
+            for i, shrink in enumerate(shrink_coeffs):
+                if shrink:
+                    threlshold = calc_universal_threshold(coeffs[-1])
+                    coeffs[i] = pywt.threshold(coeffs[i], threlshold, threshold_mode)
 
-            data_transformed[col] = pywt.waverec(coeffs, wavelet, mode)
+            data_transformed[col] = pywt.waverec(coeffs, wavelet, wavelet_mode)
 
-        self.transformed = data_transformed
+        self.data_transformed = data_transformed
 
     def normalize_data(self):
-        self.normalization_mean = self.transformed.mean()
-        self.normalization_std = self.transformed.std()
-        self.normalized = (
-            self.transformed - self.normalization_mean
+        self.normalization_mean = self.data_transformed.mean()
+        self.normalization_std = self.data_transformed.std()
+        self.data_normalized = (
+            self.data_transformed - self.normalization_mean
         ) / self.normalization_std
 
     def _create_sequences(self, data, seq_size):
@@ -45,17 +58,34 @@ class Preprocessor:
             y_seq.append(y)
         return np.array(x_seq), np.array(y_seq)
 
-    def train_test_split(self, train_size, time_step):
-        limit = int(np.round(len(self.normalized) * train_size))
+    def split_data(self, train_size, time_step):
+        train_limit = int(np.round(len(self.data) * train_size))
+        remaining_size = len(self.data) - train_limit
+        validation_limit = train_limit + int(np.round(remaining_size / 2))
 
-        self.dates_train = self.dates[:limit]
-        self.dates_test = self.dates[limit:]
+        self.label_train = self.data.iloc[time_step:train_limit, self.target_column_idx]
+        self.label_validation = self.data.iloc[
+            train_limit + time_step : validation_limit, self.target_column_idx
+        ]
+        self.label_test = self.data.iloc[
+            validation_limit + time_step :, self.target_column_idx
+        ]
+
+        self.dates_train = self.dates[time_step:train_limit]
+        self.dates_validation = self.dates[train_limit + time_step : validation_limit]
+        self.dates_test = self.dates[validation_limit + time_step :]
 
         self.X_train, self.y_train = self._create_sequences(
-            self.normalized[:limit], time_step
+            self.data_normalized[:train_limit],
+            time_step,
+        )
+        self.X_validation, self.y_validation = self._create_sequences(
+            self.data_normalized[train_limit:validation_limit],
+            time_step,
         )
         self.X_test, self.y_test = self._create_sequences(
-            self.normalized[limit:], time_step
+            self.data_normalized[validation_limit:],
+            time_step,
         )
 
     def reverse_normalize(self, data, column):

@@ -1,102 +1,84 @@
 import src.params as p
-
-from src.model import Model
 from src.data import Preprocessor
+from src.model import Model
 from src.utils import plot_lines
-
-# ==== #
-# Data #
-# ==== #
-
-# Definition
 
 pre = Preprocessor()
 pre.get_data(p.ticker, p.start, p.end, p.target)
-pre.denoise_data(p.wavelet, p.mode, p.levels, p.keep_levels)
+pre.denoise_data(p.wavelet, p.wavelet_mode, p.levels, p.shrink_coeffs, p.threshold_mode)
 pre.normalize_data()
-pre.train_test_split(p.train_size, p.time_step)
-
-# Results
+pre.split_data(p.train_size, p.time_step)
 
 plot_lines(
-    [
-        {
-            'y': pre.data['Close'],
-            'x': pre.dates,
-            'label': 'Real',
-        },
-        {
-            'y': pre.transformed['Close'],
-            'x': pre.dates,
-            'label': 'Reconstrução',
-        },
-    ],
-    "Resultados da Redução de Ruído por Wavelet",
-    "Data",
-    "Preço"
+    x=pre.dates,
+    Y=[pre.data["Close"], pre.data_transformed["Close"]],
+    legends=["Original", "Reconstrução"],
+    title="Resultados da redução de ruído utilizando transformada wavelet",
+    xlabel="Data",
+    ylabel="Preço",
 )
 
-# ===== #
-# Model #
-# ===== #
+model = Model()
 
-# Definition
+if False:
+    param_grid = {
+        "model__learning_rate": [0.001, 0.01, 0.1],
+        "model__hidden_state_size": [10, 20, 50, 100],
+        "batch_size": [64, 128, 256, 512],
+    }
 
-num_features = pre.X_train.shape[-1]
+    model.grid_search_optimization(
+        pre.X_train,
+        pre.y_train,
+        param_grid,
+    )
 
-model = Model(p.epochs, num_features, p.time_step, p.learning_rate, p.hidden_state_size, p.batch_size)
-model.fit(pre.X_train, pre.y_train, pre.X_test, pre.y_test)
+else:
+    model.fit(
+        pre.X_train,
+        pre.y_train,
+        pre.X_validation,
+        pre.y_validation,
+    )
 
-train_pred = model.predict(pre.X_train)
-test_pred = model.predict(pre.X_test)
+    pred_train = model.predict(pre.X_train)
+    pred_validation = model.predict(pre.X_validation)
+    pred_test = model.predict(pre.X_test)
 
-# Results
+    plot_lines(
+        x=pre.dates_train,
+        Y=[pre.label_train, pre.reverse_normalize(pred_train, p.target)],
+        legends=["Real", "Predição"],
+        title="Resultado da predição nos dados de treino",
+        xlabel="Data",
+        ylabel="Preço",
+    )
 
-plot_lines(
-    [
-        {
-            'y': pre.reverse_normalize(pre.y_train, p.target),
-            'x': pre.dates_train,
-            'label': 'Real',
-        },
-        {
-            'y': pre.reverse_normalize(train_pred, p.target),
-            'x': pre.dates_train,
-            'label': 'Predição',
-        },
-    ],
-    "Resultados no Dataset de Treino",
-    "Data",
-    "Preço",
-)
+    plot_lines(
+        x=pre.dates_validation,
+        Y=[pre.label_validation, pre.reverse_normalize(pred_validation, p.target)],
+        legends=["Real", "Predição"],
+        title="Resultado da predição nos dados de validação",
+        xlabel="Data",
+        ylabel="Preço",
+    )
 
-plot_lines(
-    [
-        {
-            'y': pre.reverse_normalize(pre.y_test, p.target),
-            'x': pre.dates_test,
-            'label': 'Real',
-        },
-        {
-            'y': pre.reverse_normalize(test_pred, p.target),
-            'x': pre.dates_test,
-            'label': 'Predição',
-        },
-    ],
-    "Resultados no Dataset de Teste",
-    "Data",
-    "Preço",
-)
+    plot_lines(
+        x=pre.dates_test,
+        Y=[pre.label_test, pre.reverse_normalize(pred_test, p.target)],
+        legends=["Real", "Predição"],
+        title="Resultado da predição nos dados de teste",
+        xlabel="Data",
+        ylabel="Preço",
+    )
 
-# Avaliation
+    metrics = model.evaluate(
+        pre.reverse_normalize(pre.y_test, p.target),
+        pre.reverse_normalize(pred_test, p.target),
+    )
 
-metrics = model.avaliate(
-    pre.reverse_normalize(pre.y_test, p.target),
-    pre.reverse_normalize(test_pred, p.target),
-)
-
-print("\nAvaliação dos Resultados:")
-print("Raiz do Erro Quadrático Médio:", metrics['rmse'])
-print("Erro Absoluto Médio:", metrics['mae'])
-print("R²:", metrics['r2'])
-print("Tracking Error:", metrics['te'])
+    print("\nAvaliação dos Resultados:")
+    print("Raiz do Erro Quadrático Médio:", metrics["rmse"])
+    print("Erro Absoluto Médio:", metrics["mae"])
+    print("R²:", metrics["r2"])
+    print("Tracking Error:", metrics["te"])
