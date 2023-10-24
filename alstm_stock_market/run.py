@@ -1,7 +1,7 @@
-import src.params as p
-from src.data import Preprocessor
-from src.model import Model
-from src.utils import plot_lines
+import alstm_stock_market.src.params as p
+from alstm_stock_market.src.data import Preprocessor
+from alstm_stock_market.src.model import Model
+from alstm_stock_market.src.utils import plot_lines
 
 pre = Preprocessor()
 pre.get_data(p.ticker, p.start, p.end, p.target)
@@ -14,6 +14,18 @@ plot_lines(
     Y=[pre.data["Close"], pre.data_transformed["Close"]],
     legends=["Original", "Reconstrução"],
     title="Resultados da redução de ruído utilizando transformada wavelet",
+    xlabel="Data",
+    ylabel="Preço",
+)
+
+plot_lines(
+    x=pre.dates[('2009-01-01'<= pre.dates) & (pre.dates <= '2009-08-01')],
+    Y=[
+        pre.data[('2009-01-01'<= pre.data.index) & (pre.data.index <= '2009-08-01')]["Close"],
+        pre.data_transformed[('2009-01-01'<= pre.data.index) & (pre.data.index <= '2009-08-01')]["Close"],
+    ],
+    legends=["Original", "Reconstrução"],
+    title="Recorte da redução de ruído utilizando transformada wavelet",
     xlabel="Data",
     ylabel="Preço",
 )
