@@ -8,4 +8,7 @@
   },
   "isort.args": ["--profile", "black"],
   "python.analysis.typeCheckingMode": "basic"
+
+  // Add to user settings to debug with poetry
+  // "python.venvPath": "~/Library/Caches/pypoetry/virtualenvs",
 }

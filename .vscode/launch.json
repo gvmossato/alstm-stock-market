@@ -5,12 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python",
+            "name": "Debug ALSTM",
             "type": "python",
             "request": "launch",
-            "program": "./main.py",
+            "program": "./alstm_stock_market/run.py",
             "console": "integratedTerminal",
-            "justMyCode": true
+            "justMyCode": true,
+            "args": [], // ["--debug"],
         }
     ]
 }
