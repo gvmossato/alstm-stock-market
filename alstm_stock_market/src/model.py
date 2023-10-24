@@ -6,8 +6,8 @@ from tensorflow.keras.layers import LSTM, Dense, Dropout, Input, Layer
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import Adam
 
-import src.params as p
-from src.utils import now, save_dict
+import alstm_stock_market.src.params as p
+from alstm_stock_market.src.utils import now, save_dict
 
 
 def create_model(learning_rate, hidden_state_size):
@@ -101,11 +101,11 @@ class Model:
             f"Melhor score ({grid_result.best_score_}) utilizando: {grid_result.best_params_}"
         )
         save_dict(
-            f"./logs/{now()}_GridSearch_best_params.txt",
+            f"./alstm_stock_market/logs/{now()}_GridSearch_best_params.txt",
             grid_result.best_params_,
         )
         save_dict(
-            f"./logs/{now()}_GridSearch_results.txt",
+            f"./alstm_stock_market/logs/{now()}_GridSearch_results.txt",
             grid_result.cv_results_,
         )
 
@@ -138,5 +138,5 @@ class Model:
             "te": te(y, y_pred),
         }
 
-        save_dict(f"./logs/{now()}_metrics.txt", metrics)
+        save_dict(f"./alstm_stock_market/logs/{now()}_metrics.txt", metrics)
         return metrics

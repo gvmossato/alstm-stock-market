@@ -40,7 +40,7 @@ def plot_candlestick(data, title="Gráfico de Velas", xlabel="Tempo", ylabel="Pr
     fig = go.Figure(data=plot_data, layout=layout)
     fig.show()
 
-    py.write_image(fig, f"./images/{now()}_{title}.svg")
+    py.write_image(fig, f"./alstm_stock_market/images/{now()}_{title}.svg")
 
 
 def plot_lines(x, Y, legends, title="Gráfico de Linhas", xlabel="x", ylabel="y"):
@@ -56,4 +56,4 @@ def plot_lines(x, Y, legends, title="Gráfico de Linhas", xlabel="x", ylabel="y"
     fig = go.Figure(data=plot_data, layout=layout)
     fig.show()
 
-    py.write_image(fig, f"./images/{now()}_{title}.svg")
+    py.write_image(fig, f"./alstm_stock_market/images/{now()}_{title}.svg")
