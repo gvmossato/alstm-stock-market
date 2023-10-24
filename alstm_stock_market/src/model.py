@@ -10,11 +10,12 @@ import alstm_stock_market.src.params as p
 from alstm_stock_market.src.utils import now, save_dict
 
 
-def create_model(learning_rate, hidden_state_size):
+def create_model(learning_rate, hidden_state_size, add_attention=True):
     model = Sequential()
     model.add(Input(shape=(p.time_step, p.num_features)))
     model.add(LSTM(hidden_state_size, return_sequences=True))
-    model.add(SoftmaxAttention())
+    if add_attention:
+        model.add(SoftmaxAttention())
     model.add(Dropout(0.2))
     model.add(Dense(1, activation="linear"))
 
