@@ -11,7 +11,7 @@
             "program": "./alstm_stock_market/run.py",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": [], // ["--debug"],
+            "args": ["--tunning"],
         }
     ]
 }

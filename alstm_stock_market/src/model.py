@@ -1,13 +1,19 @@
+import os
+
 import numpy as np
 import tensorflow.keras.backend as K
+from dotenv import load_dotenv
 from scikeras.wrappers import KerasRegressor
-from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
+from sklearn.model_selection import TimeSeriesSplit
+from skopt import BayesSearchCV
 from tensorflow.keras.layers import LSTM, Dense, Dropout, Input, Layer
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import Adam
 
 import alstm_stock_market.src.params as p
 from alstm_stock_market.src.utils import now, save_dict
+
+load_dotenv()
 
 
 def create_model(learning_rate, hidden_state_size, add_attention=True):
@@ -80,7 +86,7 @@ class Model:
             verbose=1,
         )
 
-    def grid_search_optimization(self, X_train, y_train, param_grid):
+    def bayesian_optimization(self, X_train, y_train, param_space):
         estimator = KerasRegressor(
             model=create_model,
             epochs=p.epochs,
@@ -89,25 +95,30 @@ class Model:
             verbose=0,
         )
 
-        grid = GridSearchCV(
+        bayes_search = BayesSearchCV(
             estimator=estimator,
+            search_spaces=param_space,
+            n_iter=1,
             scoring=f"neg_{p.loss_function}",
-            param_grid=param_grid,
             n_jobs=-1,
             cv=TimeSeriesSplit(n_splits=3),
+            refit=True,
+            random_state=42,
         )
-        grid_result = grid.fit(X_train, y_train)
+        bayes_search_result = bayes_search.fit(X_train, y_train)
 
+        # Type checking fails to identify dynamic attributes
         print(
-            f"Melhor score ({grid_result.best_score_}) utilizando: {grid_result.best_params_}"
+            f"Best score ({bayes_search_result.best_score_})",  # type: ignore
+            f"obtained with parameters: {bayes_search_result.best_params_}",  # type: ignore
         )
         save_dict(
-            f"./alstm_stock_market/logs/{now()}_GridSearch_best_params.txt",
-            grid_result.best_params_,
+            os.path.join(os.environ["LOGS"], f"{now()}_BayesSearch_best.txt"),
+            bayes_search_result.best_params_,  # type: ignore
         )
         save_dict(
-            f"./alstm_stock_market/logs/{now()}_GridSearch_results.txt",
-            grid_result.cv_results_,
+            os.path.join(os.environ["LOGS"], f"{now()}_BayesSearch_results.txt"),
+            bayes_search_result.cv_results_,  # type: ignore
         )
 
     def predict(self, X):
@@ -139,5 +150,5 @@ class Model:
             "te": te(y, y_pred),
         }
 
-        save_dict(f"./alstm_stock_market/logs/{now()}_metrics.txt", metrics)
+        save_dict(os.path.join(os.environ["LOGS"], f"{now()}_metrics.txt"), metrics)
         return metrics

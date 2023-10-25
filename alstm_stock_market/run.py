@@ -1,7 +1,9 @@
+from skopt.space import Integer, Real
+
 import alstm_stock_market.src.params as p
 from alstm_stock_market.src.data import Preprocessor
 from alstm_stock_market.src.model import Model
-from alstm_stock_market.src.utils import plot_lines
+from alstm_stock_market.src.utils import cmd_args, plot_lines
 
 pre = Preprocessor()
 pre.get_data(p.ticker, p.start, p.end, p.target)
@@ -19,10 +21,14 @@ plot_lines(
 )
 
 plot_lines(
-    x=pre.dates[('2009-01-01'<= pre.dates) & (pre.dates <= '2009-08-01')],
+    x=pre.dates[("2009-01-01" <= pre.dates) & (pre.dates <= "2009-08-01")],
     Y=[
-        pre.data[('2009-01-01'<= pre.data.index) & (pre.data.index <= '2009-08-01')]["Close"],
-        pre.data_transformed[('2009-01-01'<= pre.data.index) & (pre.data.index <= '2009-08-01')]["Close"],
+        pre.data[("2009-01-01" <= pre.data.index) & (pre.data.index <= "2009-08-01")][
+            "Close"
+        ],
+        pre.data_transformed[
+            ("2009-01-01" <= pre.data.index) & (pre.data.index <= "2009-08-01")
+        ]["Close"],
     ],
     legends=["Original", "Reconstrução"],
     title="Recorte da redução de ruído utilizando transformada wavelet",
@@ -31,18 +37,19 @@ plot_lines(
 )
 
 model = Model()
+args = cmd_args()
 
-if False:
-    param_grid = {
-        "model__learning_rate": [0.001, 0.01, 0.1],
-        "model__hidden_state_size": [10, 20, 50, 100],
-        "batch_size": [64, 128, 256, 512],
+if args.tunning:
+    param_space = {
+        "model__learning_rate": Real(0.001, 0.1, prior="log-uniform"),
+        "model__hidden_state_size": Integer(10, 100),
+        "batch_size": Integer(64, 512),
     }
 
-    model.grid_search_optimization(
+    model.bayesian_optimization(
         pre.X_train,
         pre.y_train,
-        param_grid,
+        param_space,
     )
 
 else:
