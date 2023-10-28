@@ -77,6 +77,7 @@ else:
         x=pre.dates_validation,
         Y=[pre.label_validation, pre.reverse_normalize(pred_validation, p.target)],
         legends=["Real", "Predição"],
+        legend_pos="tr",
         title="Resultado da predição nos dados de validação",
         xlabel="Data",
         ylabel="Preço",

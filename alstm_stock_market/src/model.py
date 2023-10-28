@@ -104,6 +104,7 @@ class Model:
             cv=TimeSeriesSplit(n_splits=3),
             refit=True,
             random_state=42,
+            verbose=2,
         )
         bayes_search_result = bayes_search.fit(X_train, y_train)
 

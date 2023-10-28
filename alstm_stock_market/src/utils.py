@@ -5,7 +5,7 @@ from datetime import datetime
 
 import numpy as np
 import plotly.graph_objects as go
-import plotly.io as py
+from plotly.io import write_image
 
 
 def cmd_args():
@@ -44,18 +44,32 @@ def plot_candlestick(data, title="Gráfico de Velas", xlabel="Tempo", ylabel="Pr
     fig = go.Figure(data=plot_data, layout=layout)
     fig.show()
 
-    py.write_image(fig, os.path.join(os.environ["IMAGES"], f"{now()}_{title}.svg"))
+    write_image(fig, os.path.join(os.environ["IMAGES"], f"{now()}_{title}.svg"))
 
 
-def plot_lines(x, Y, legends, title="Gráfico de Linhas", xlabel="x", ylabel="y"):
+def plot_lines(
+    x, Y, legends, legend_pos="br", title="Gráfico de Linhas", xlabel="x", ylabel="y"
+):
+    legend_coordinates = {
+        "tl": {"x": 0, "y": 1, "xanchor": "left", "yanchor": "top"},
+        "tr": {"x": 1, "y": 1, "xanchor": "right", "yanchor": "top"},
+        "bl": {"x": 0, "y": 0, "xanchor": "left", "yanchor": "bottom"},
+        "br": {"x": 1, "y": 0, "xanchor": "right", "yanchor": "bottom"},
+    }
+
     plot_data = []
-
     for y, legend in zip(Y, legends):
         plot_data.append(go.Scatter(x=x, y=y, mode="lines", name=legend))
 
-    layout = go.Layout(title=title, xaxis={"title": xlabel}, yaxis={"title": ylabel})
+    layout = go.Layout(
+        title=title,
+        xaxis={"title": xlabel},
+        yaxis={"title": ylabel},
+        legend=legend_coordinates[legend_pos],
+        margin=dict(l=10, r=10, b=50, t=50)
+    )
 
     fig = go.Figure(data=plot_data, layout=layout)
     fig.show()
 
-    py.write_image(fig, os.path.join(os.environ["IMAGES"], f"{now()}_{title}.svg"))
+    write_image(fig, os.path.join(os.environ["IMAGES"], f"{now()}_{title}.svg"))
