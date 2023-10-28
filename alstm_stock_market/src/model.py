@@ -16,13 +16,13 @@ from alstm_stock_market.src.utils import now, save_dict
 load_dotenv()
 
 
-def create_model(learning_rate, hidden_state_size, add_attention=True):
+def create_model(learning_rate, dropout_rate, hidden_state_size=20, add_attention=True):
     model = Sequential()
     model.add(Input(shape=(p.time_step, p.num_features)))
     model.add(LSTM(hidden_state_size, return_sequences=True))
     if add_attention:
         model.add(SoftmaxAttention())
-    model.add(Dropout(0.2))
+    model.add(Dropout(dropout_rate))
     model.add(Dense(1, activation="linear"))
 
     optimizer = Adam(learning_rate=learning_rate)

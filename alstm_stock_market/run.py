@@ -1,4 +1,4 @@
-from skopt.space import Integer, Real
+from skopt.space import Real, Categorical
 
 import alstm_stock_market.src.params as p
 from alstm_stock_market.src.data import Preprocessor
@@ -39,11 +39,11 @@ plot_lines(
 model = Model()
 args = cmd_args()
 
-if args.tunning:
+if args.tuning:
     param_space = {
-        "model__learning_rate": Real(0.001, 0.1, prior="log-uniform"),
-        "model__hidden_state_size": Integer(10, 100),
-        "batch_size": Integer(64, 512),
+        "model__learning_rate": Real(0.0001, 0.01, prior="log-uniform"),
+        "model__dropout_rate": Real(0, 0.3),
+        "batch_size": Categorical([64, 128, 256, 1024]),
     }
 
     model.bayesian_optimization(
