@@ -12,7 +12,7 @@ def cmd_args():
     parser = ArgumentParser()
     parser.add_argument(
         "-t",
-        "--tunning",
+        "--tuning",
         default=False,
         action="store_true",
         help="Run BayesianSearch, require `param_grid` to be set in `./alstm_stock_market/run.py`",
@@ -21,8 +21,8 @@ def cmd_args():
 
 
 def save_dict(path, data):
-    np.savetxt(path, [json.dumps(data)], fmt="%s")
-
+    with open(path, 'w') as file:
+        file.write(str(data))
 
 def now():
     return datetime.now().strftime("%Y-%m-%d_%H.%M.%S")
@@ -66,7 +66,7 @@ def plot_lines(
         xaxis={"title": xlabel},
         yaxis={"title": ylabel},
         legend=legend_coordinates[legend_pos],
-        margin=dict(l=10, r=10, b=50, t=50)
+        margin=dict(l=10, r=10, b=50, t=50),
     )
 
     fig = go.Figure(data=plot_data, layout=layout)

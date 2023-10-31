@@ -20,3 +20,4 @@ hidden_state_size = 20
 batch_size = 256
 time_step = 20
 loss_function = "mean_squared_error"
+dropout_rate = 0.2
