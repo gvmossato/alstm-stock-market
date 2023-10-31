@@ -72,7 +72,7 @@ class SoftmaxAttention(Layer):
 
 class Model:
     def __init__(self):
-        self.model = create_model(p.learning_rate, p.hidden_state_size)
+        self.model = create_model(p.learning_rate, p.dropout_rate, p.hidden_state_size)
 
     def fit(self, X_train, y_train, X_validation, y_validation):
         self.model.fit(
@@ -98,12 +98,11 @@ class Model:
         bayes_search = BayesSearchCV(
             estimator=estimator,
             search_spaces=param_space,
-            n_iter=1,
+            n_iter=100,
             scoring=f"neg_{p.loss_function}",
             n_jobs=-1,
             cv=TimeSeriesSplit(n_splits=3),
             refit=True,
-            random_state=42,
             verbose=2,
         )
         bayes_search_result = bayes_search.fit(X_train, y_train)
