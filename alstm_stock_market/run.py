@@ -1,58 +1,53 @@
-from skopt.space import Real, Categorical
+import yfinance as yf
+from skopt.space import Categorical, Real
 
-import alstm_stock_market.src.params as p
-from alstm_stock_market.src.data import Preprocessor
-from alstm_stock_market.src.model import Model
-from alstm_stock_market.src.utils import cmd_args, plot_lines
+import alstm_stock_market.src.model.params as p
+from alstm_stock_market.src.helpers.plotter import Plotter
+from alstm_stock_market.src.helpers.utils import cmd_args
+from alstm_stock_market.src.model.evaluator import Evaluator
+from alstm_stock_market.src.model.model import Model
+from alstm_stock_market.src.model.preprocessor import Preprocessor
 
-pre = Preprocessor()
-pre.get_data(p.ticker, p.start, p.end, p.target)
-pre.denoise_data(p.wavelet, p.wavelet_mode, p.levels, p.shrink_coeffs, p.threshold_mode)
-pre.normalize_data()
-pre.split_data(p.train_size, p.time_step)
 
-plot_lines(
-    x=pre.dates,
-    Y=[pre.data["Close"], pre.data_transformed["Close"]],
-    legends=["Original", "Reconstrução"],
-    title="Resultados da redução de ruído utilizando transformada wavelet",
-    xlabel="Data",
-    ylabel="Preço",
-)
+def main():
+    data = yf.download(p.ticker, start=p.start, end=p.end)
 
-plot_lines(
-    x=pre.dates[("2009-01-01" <= pre.dates) & (pre.dates <= "2009-08-01")],
-    Y=[
-        pre.data[("2009-01-01" <= pre.data.index) & (pre.data.index <= "2009-08-01")][
-            "Close"
-        ],
-        pre.data_transformed[
-            ("2009-01-01" <= pre.data.index) & (pre.data.index <= "2009-08-01")
-        ]["Close"],
-    ],
-    legends=["Original", "Reconstrução"],
-    title="Recorte da redução de ruído utilizando transformada wavelet",
-    xlabel="Data",
-    ylabel="Preço",
-)
+    pre = Preprocessor(data)
+    pre.run()
 
-model = Model()
-args = cmd_args()
+    model = Model()
 
-if args.tuning:
-    param_space = {
-        "model__learning_rate": Real(0.0001, 0.01, prior="log-uniform"),
-        "model__dropout_rate": Real(0, 0.3),
-        "batch_size": Categorical([64, 128, 256, 1024]),
-    }
+    args = cmd_args()
 
-    model.bayesian_optimization(
-        pre.X_train,
-        pre.y_train,
-        param_space,
-    )
+    if args.tuning:
+        param_grid = {  # Grid search only
+            "model__learning_rate": [0.001, 0.01, 0.1],
+            "model__hidden_state_size": [10, 20, 50, 100],
+            "batch_size": [64, 128, 256, 512],
+        }
+        param_space = {  # Bayesian search only
+            "model__learning_rate": Real(0.0001, 0.01, prior="log-uniform"),
+            "model__dropout_rate": Real(0, 0.3),
+            "batch_size": Categorical([64, 128, 256, 1024]),
+        }
+        best = model.tune(
+            args.tuning,
+            pre.X_train,
+            pre.y_train,
+            param_grid,
+            param_space,
+        )
+        print(
+            f"Best score of {best['score']} obtained with parameters {best['params']}.",
+            "Overall results logs saved.",
+        )
+        return
 
-else:
+    plot = Plotter()
+
+    plot.wavelet_results(pre)
+    plot.wavelet_results_detail(pre)
+
     model.fit(
         pre.X_train,
         pre.y_train,
@@ -60,45 +55,35 @@ else:
         pre.y_validation,
     )
 
+    plot.learning_curve(model)
+
     pred_train = model.predict(pre.X_train)
     pred_validation = model.predict(pre.X_validation)
     pred_test = model.predict(pre.X_test)
 
-    plot_lines(
-        x=pre.dates_train,
-        Y=[pre.label_train, pre.reverse_normalize(pred_train, p.target)],
-        legends=["Real", "Predição"],
-        title="Resultado da predição nos dados de treino",
-        xlabel="Data",
-        ylabel="Preço",
-    )
+    plot.prediction_train(pre, pred_train)
+    plot.prediction_validation(pre, pred_validation)
+    plot.prediction_test(pre, pred_test)
 
-    plot_lines(
-        x=pre.dates_validation,
-        Y=[pre.label_validation, pre.reverse_normalize(pred_validation, p.target)],
-        legends=["Real", "Predição"],
-        legend_pos="tr",
-        title="Resultado da predição nos dados de validação",
-        xlabel="Data",
-        ylabel="Preço",
+    evaluator = Evaluator(
+        pre.y_test,
+        pred_test,
+        pre.target_normalization_mean,
+        pre.target_normalization_std,
     )
-
-    plot_lines(
-        x=pre.dates_test,
-        Y=[pre.label_test, pre.reverse_normalize(pred_test, p.target)],
-        legends=["Real", "Predição"],
-        title="Resultado da predição nos dados de teste",
-        xlabel="Data",
-        ylabel="Preço",
-    )
-
-    metrics = model.evaluate(
-        pre.reverse_normalize(pre.y_test, p.target),
-        pre.reverse_normalize(pred_test, p.target),
-    )
+    evaluator.run()
 
     print("\nAvaliação dos Resultados:")
-    print("Raiz do Erro Quadrático Médio:", metrics["rmse"])
-    print("Erro Absoluto Médio:", metrics["mae"])
-    print("R²:", metrics["r2"])
-    print("Tracking Error:", metrics["te"])
+    print("Raiz do Erro Quadrático Médio:", evaluator.metrics["rmse"])
+    print("Erro Absoluto Médio:", evaluator.metrics["mae"])
+    print("R-quadrado:", evaluator.metrics["r2"])
+    print("Tracking Error:", evaluator.metrics["te"])
+
+    plot.returns_trend_distribution(evaluator.y_trend, evaluator.y_pred_trend)
+    plot.confusion_matrix(evaluator.confusion_matrix)
+    plot.cumulative_return(pre, evaluator.cumulative_return)
+    plot.cumulative_return_spread(pre, evaluator.cumulative_return)
+
+
+if __name__ == "__main__":
+    main()

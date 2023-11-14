@@ -14,10 +14,10 @@ threshold_mode = "soft"
 
 # Model Params
 train_size = 0.95
-epochs = 1000
-learning_rate = 0.001
+epochs = 2000
+learning_rate = 0.00018
 hidden_state_size = 20
-batch_size = 256
+batch_size = 128
 time_step = 20
 loss_function = "mean_squared_error"
-dropout_rate = 0.2
+dropout_rate = 0.12241

@@ -1,6 +1,3 @@
-import os
-
-import numpy as np
 import tensorflow.keras.backend as K
 from dotenv import load_dotenv
 from scikeras.wrappers import KerasRegressor
@@ -10,18 +7,23 @@ from tensorflow.keras.layers import LSTM, Dense, Dropout, Input, Layer
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import Adam
 
-import alstm_stock_market.src.params as p
-from alstm_stock_market.src.utils import now, save_dict
+import alstm_stock_market.src.model.params as p
+from alstm_stock_market.src.helpers.utils import save_txt
 
 load_dotenv()
 
 
-def create_model(learning_rate, dropout_rate, hidden_state_size=20, add_attention=True):
+def create_model(
+    learning_rate=0.00018,
+    dropout_rate=0.12241,
+    hidden_state_size=20,
+    add_attention=False,
+):
     model = Sequential()
     model.add(Input(shape=(p.time_step, p.num_features)))
-    model.add(LSTM(hidden_state_size, return_sequences=True))
+    model.add(LSTM(hidden_state_size, return_sequences=add_attention))
     if add_attention:
-        model.add(SoftmaxAttention())
+        model.add(ClassicAttention())
     model.add(Dropout(dropout_rate))
     model.add(Dense(1, activation="linear"))
 
@@ -31,9 +33,9 @@ def create_model(learning_rate, dropout_rate, hidden_state_size=20, add_attentio
     return model
 
 
-class SoftmaxAttention(Layer):
+class ClassicAttention(Layer):
     def __init__(self, **kwargs):
-        super(SoftmaxAttention, self).__init__(**kwargs)
+        super(ClassicAttention, self).__init__(**kwargs)
 
     def build(self, input_shape):
         self.W_Q = self.add_weight(
@@ -51,7 +53,7 @@ class SoftmaxAttention(Layer):
             initializer="glorot_uniform",
             trainable=True,
         )
-        super(SoftmaxAttention, self).build(input_shape)
+        super(ClassicAttention, self).build(input_shape)
 
     def call(self, x):
         Q = K.dot(x, self.W_Q)
@@ -70,12 +72,69 @@ class SoftmaxAttention(Layer):
         return (input_shape[0], input_shape[-1])
 
 
+class TanhAttention(Layer):
+    def __init__(self, **kwargs):
+        super(TanhAttention, self).__init__(**kwargs)
+
+    def build(self, input_shape):
+        assert (
+            len(input_shape) == 3
+        ), "Expecting input shape of (batch_size, time_steps, features)"
+
+        # Weights for the linear transformation
+        self.W_a = self.add_weight(
+            name="W_a",
+            shape=(input_shape[-1], input_shape[-1]),
+            initializer="glorot_uniform",
+            trainable=True,
+        )
+        # Bias for the linear transformation
+        self.b_a = self.add_weight(
+            name="b_a", shape=(input_shape[-1],), initializer="zeros", trainable=True
+        )
+        super(TanhAttention, self).build(input_shape)
+
+    def call(self, x):
+        # Applying linear transformation and tanh activation to get scores
+        s_t = K.tanh(K.dot(x, self.W_a) + self.b_a)
+
+        # Assuming the scores are to be used as attention weights
+        # We perform a softmax across the time_step axis
+        attention_weights = K.softmax(s_t, axis=1)
+
+        # Multiply each vector by the attention weights using broadcasting
+        weighted_input = attention_weights * x
+
+        # Summing over the time_steps to get a single weighted sum vector per sample
+        return K.sum(weighted_input, axis=1)
+
+    def compute_output_shape(self, input_shape):
+        # Return shape (batch_size, features), assuming you sum over the time_steps
+        return (input_shape[0], input_shape[-1])
+
+
+# In your create_model function replace SoftmaxAttention() with TanhAttention()
+
+
 class Model:
     def __init__(self):
         self.model = create_model(p.learning_rate, p.dropout_rate, p.hidden_state_size)
 
+    def tune(self, method, X_train, y_train, param_grid, param_space):
+        methods = {
+            "grid": lambda: self._grid_search(param_grid, X_train, y_train),
+            "bayes": lambda: self._bayesian_search(param_space, X_train, y_train),
+        }
+
+        try:
+            return methods[method]()
+        except KeyError:
+            raise ValueError(
+                f"Invalid tuning  method. Valid methods are: {', '.join(methods.keys())}"
+            )
+
     def fit(self, X_train, y_train, X_validation, y_validation):
-        self.model.fit(
+        self.fitted = self.model.fit(
             X_train,
             y_train,
             epochs=p.epochs,
@@ -86,7 +145,7 @@ class Model:
             verbose=1,
         )
 
-    def bayesian_optimization(self, X_train, y_train, param_space):
+    def _bayesian_search(self, X_train, y_train, param_space):
         estimator = KerasRegressor(
             model=create_model,
             epochs=p.epochs,
@@ -94,7 +153,6 @@ class Model:
             shuffle=False,
             verbose=0,
         )
-
         bayes_search = BayesSearchCV(
             estimator=estimator,
             search_spaces=param_space,
@@ -107,48 +165,13 @@ class Model:
         )
         bayes_search_result = bayes_search.fit(X_train, y_train)
 
-        # Type checking fails to identify dynamic attributes
-        print(
-            f"Best score ({bayes_search_result.best_score_})",  # type: ignore
-            f"obtained with parameters: {bayes_search_result.best_params_}",  # type: ignore
-        )
-        save_dict(
-            os.path.join(os.environ["LOGS"], f"{now()}_BayesSearch_best.txt"),
-            bayes_search_result.best_params_,  # type: ignore
-        )
-        save_dict(
-            os.path.join(os.environ["LOGS"], f"{now()}_BayesSearch_results.txt"),
-            bayes_search_result.cv_results_,  # type: ignore
-        )
+        best = {
+            "score": bayes_search_result.best_score_,
+            "params": bayes_search_result.best_params_,
+        }
+
+        save_txt(bayes_search_result, "BayesSearch_results")
+        return best
 
     def predict(self, X):
         return self.model.predict(X, batch_size=p.batch_size).flatten()
-
-    def evaluate(self, y, y_pred):
-        def rmse(y, yhat):
-            return np.sqrt(np.sum((y - yhat) ** 2) / len(y))
-
-        def mae(y, yhat):
-            return np.sum(np.abs(y - yhat)) / len(y)
-
-        def r2(y, yhat):
-            return 1 - np.sum((y - yhat) ** 2) / np.sum((y - np.mean(y)) ** 2)
-
-        def ret(p):
-            return np.diff(p) / p[:-1]
-
-        def te(y, yhat):
-            y_ret = ret(y)
-            yhat_ret = ret(yhat)
-            n = len(y_ret)
-            return np.sqrt(np.sum((y_ret - yhat_ret) ** 2) / (n - 1))
-
-        metrics = {
-            "rmse": rmse(y, y_pred),
-            "mae": mae(y, y_pred),
-            "r2": r2(y, y_pred),
-            "te": te(y, y_pred),
-        }
-
-        save_dict(os.path.join(os.environ["LOGS"], f"{now()}_metrics.txt"), metrics)
-        return metrics
