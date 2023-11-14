@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{ include = "alstm_stock_market" }]
 
 [tool.poetry.scripts]
-start = "alstm_stock_market.run:__main__"
+start = "alstm_stock_market.run:main"
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12.0"
