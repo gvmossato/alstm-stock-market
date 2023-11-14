@@ -44,5 +44,7 @@ env.bak/
 venv.bak/
 
 # Unversioned repo folders
-images/
-logs/
+alstm_stock_market/logs/*
+alstm_stock_market/images/*
+!alstm_stock_market/logs/.gitkeep
+!alstm_stock_market/images/.gitkeep
