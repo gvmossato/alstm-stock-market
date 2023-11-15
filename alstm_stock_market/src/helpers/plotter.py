@@ -46,30 +46,56 @@ class Plotter:
         if self.save:
             save_image(fig, title)
 
-    def _plot_heatmap(self, x, y, Z, title="Mapa de calor", xlabel="x", ylabel="y"):
+    def _plot_double_scale_heatmap(
+        self,
+        x,
+        y,
+        Z,
+        title="Mapa de calor",
+        xlabel="x",
+        ylabel="y",
+    ):
+        true_data = np.array([[Z[0, 0], np.nan], [np.nan, Z[1, 1]]])
+        false_data = np.array([[np.nan, Z[0, 1]], [Z[1, 0], np.nan]])
+
+        green_colorscale = [[0.0, "rgba(0, 80, 0, 0.5)"], [1.0, "rgba(0, 80, 0, 1)"]]
+        red_colorscale = [[0.0, "rgba(130, 0, 0, 0.5)"], [1.0, "rgba(130, 0, 0, 1)"]]
+
+        heatmap_true = go.Heatmap(
+            x=x,
+            y=y,
+            z=true_data,
+            colorscale=green_colorscale,
+            showscale=False,
+        )
+        heatmap_false = go.Heatmap(
+            x=x,
+            y=y,
+            z=false_data,
+            colorscale=red_colorscale,
+            showscale=False,
+        )
+
         total = np.sum(Z)
         annotations = []
         for i, row in enumerate(Z):
             for j, value in enumerate(row):
-                percentage = (value / total) * 100
-                text = f"{percentage:.1f}% ({value}/{total})"
+                text = f"{value / total * 100:.1f}% ({value}/{total})"
                 annotations.append(
-                    dict(
-                        showarrow=False,
-                        text=text,
-                        x=x[j],
-                        y=y[i],
-                        xref="x",
-                        yref="y",
-                        font=dict(color="white", size=20),
-                    )
+                    {
+                        "showarrow": False,
+                        "text": text,
+                        "x": x[j],
+                        "y": y[i],
+                        "xref": "x",
+                        "yref": "y",
+                        "font": dict(color="white", size=20),
+                    }
                 )
 
-        plot_data = go.Heatmap(x=x, y=y, z=Z, hoverongaps=False, colorscale="Viridis")
         layout = self._gen_base_layout(title, xlabel, ylabel)
         layout["annotations"] = annotations
-
-        fig = go.Figure(data=plot_data, layout=layout)
+        fig = go.Figure(data=[heatmap_true, heatmap_false], layout=layout)
         fig.show()
 
         if self.save:
@@ -171,16 +197,16 @@ class Plotter:
         self._plot_histograms(
             x=[y_labels, y_pred_labels],
             legends=["Real", "Predição"],
-            title="Distribuição Binária das Tendências de Retorno",
+            title="Distribuição binária das tendências de retorno",
             xlabel="Tendência",
         )
 
     def confusion_matrix(self, matrix):
-        self._plot_heatmap(
+        self._plot_double_scale_heatmap(
             x=["Previu subida", "Previu queda"],
             y=["Índice subiu", "Índice caiu"],
             Z=np.reshape(list(matrix.values()), (2, 2)),
-            title="Matriz de confusão para a direção do índice frente a predição",
+            title="Matriz de confusão para a tendência do índice frente à predição",
             xlabel="Modelo",
             ylabel="S&P 500",
         )
@@ -188,7 +214,7 @@ class Plotter:
     def cumulative_return(self, pre, returns):
         self._plot_lines(
             x=pre.dates_test,
-            Y=[returns["y"]*100, returns["y_pred"]*100],
+            Y=[returns["y"] * 100, returns["y_pred"] * 100],
             legends=["Real", "Predição"],
             title="Retorno acumulado no período para a predição e para o índice",
             xlabel="Data",
@@ -196,10 +222,13 @@ class Plotter:
         )
 
     def cumulative_return_spread(self, pre, returns):
+        spread = (returns["y"] - returns["y_pred"]) * 100
+        mean_series = np.full(spread.shape, np.mean(spread))
+
         self._plot_lines(
             x=pre.dates_test,
-            Y=[(returns["y"] - returns["y_pred"])*100],
-            legends=["Spread"],
+            Y=[spread, mean_series],
+            legends=["Spread", "Média"],
             title="Diferença entre o retorno acumulado do índice e da predição",
             xlabel="Data",
             ylabel="Spread (%)",
