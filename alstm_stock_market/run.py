@@ -15,9 +15,8 @@ def main():
     pre = Preprocessor(data)
     pre.run()
 
-    model = Model()
-
     args = cmd_args()
+    model = Model(load_weights=args.load_weights)
 
     if args.tuning:
         param_grid = {  # Grid search only

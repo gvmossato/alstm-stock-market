@@ -8,7 +8,11 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import Adam
 
 import alstm_stock_market.src.model.params as p
-from alstm_stock_market.src.helpers.utils import save_txt
+from alstm_stock_market.src.helpers.utils import (
+    get_latest_weights,
+    save_txt,
+    save_weights,
+)
 
 load_dotenv()
 
@@ -77,48 +81,37 @@ class TanhAttention(Layer):
         super(TanhAttention, self).__init__(**kwargs)
 
     def build(self, input_shape):
-        assert (
-            len(input_shape) == 3
-        ), "Expecting input shape of (batch_size, time_steps, features)"
-
-        # Weights for the linear transformation
         self.W_a = self.add_weight(
             name="W_a",
             shape=(input_shape[-1], input_shape[-1]),
             initializer="glorot_uniform",
             trainable=True,
         )
-        # Bias for the linear transformation
         self.b_a = self.add_weight(
-            name="b_a", shape=(input_shape[-1],), initializer="zeros", trainable=True
+            name="b_a",
+            shape=(input_shape[-1],),
+            initializer="zeros",
+            trainable=True,
         )
         super(TanhAttention, self).build(input_shape)
 
     def call(self, x):
-        # Applying linear transformation and tanh activation to get scores
         s_t = K.tanh(K.dot(x, self.W_a) + self.b_a)
-
-        # Assuming the scores are to be used as attention weights
-        # We perform a softmax across the time_step axis
         attention_weights = K.softmax(s_t, axis=1)
-
-        # Multiply each vector by the attention weights using broadcasting
         weighted_input = attention_weights * x
-
-        # Summing over the time_steps to get a single weighted sum vector per sample
         return K.sum(weighted_input, axis=1)
 
     def compute_output_shape(self, input_shape):
-        # Return shape (batch_size, features), assuming you sum over the time_steps
         return (input_shape[0], input_shape[-1])
 
 
-# In your create_model function replace SoftmaxAttention() with TanhAttention()
-
-
 class Model:
-    def __init__(self):
+    def __init__(self, load_weights=False):
         self.model = create_model(p.learning_rate, p.dropout_rate, p.hidden_state_size)
+        self.load_weights = load_weights
+
+        if self.load_weights:
+            self.model.load_weights(get_latest_weights())
 
     def tune(self, method, X_train, y_train, param_grid, param_space):
         methods = {
@@ -134,6 +127,9 @@ class Model:
             )
 
     def fit(self, X_train, y_train, X_validation, y_validation):
+        if self.load_weights:
+            return None
+
         self.fitted = self.model.fit(
             X_train,
             y_train,
@@ -144,6 +140,7 @@ class Model:
             shuffle=False,
             verbose=1,
         )
+        save_weights(self.model)
 
     def _bayesian_search(self, X_train, y_train, param_space):
         estimator = KerasRegressor(
