@@ -21,7 +21,7 @@ def create_model(
     learning_rate=0.00018,
     dropout_rate=0.12241,
     hidden_state_size=20,
-    add_attention=False,
+    add_attention=True,
 ):
     model = Sequential()
     model.add(Input(shape=(p.time_step, p.num_features)))
