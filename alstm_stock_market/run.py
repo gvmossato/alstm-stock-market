@@ -1,9 +1,11 @@
 import yfinance as yf
 from skopt.space import Categorical, Real
 
+import alstm_stock_market.src.manager.strategies as st
 import alstm_stock_market.src.model.params as p
 from alstm_stock_market.src.helpers.plotter import Plotter
 from alstm_stock_market.src.helpers.utils import cmd_args
+from alstm_stock_market.src.manager.manager import Manager
 from alstm_stock_market.src.model.evaluator import Evaluator
 from alstm_stock_market.src.model.model import Model
 from alstm_stock_market.src.model.preprocessor import Preprocessor
@@ -82,6 +84,35 @@ def main():
     plot.confusion_matrix(evaluator.confusion_matrix)
     plot.cumulative_return(pre, evaluator.cumulative_return)
     plot.cumulative_return_spread(pre, evaluator.cumulative_return)
+
+    initial_cash = 1000
+    initital_bet = 100
+
+    manager = Manager(
+        initial_cash, initital_bet, evaluator.y_pred_trend, evaluator.y_return
+    )
+
+    strategies = {
+        "Martingale": st.Martingale(initital_bet),
+        "Paroli": st.Paroli(initital_bet),
+        "D'Alembert": st.DAlembert(initital_bet),
+        "Apostas Fixas": st.Fixed(initital_bet),
+        "Apostas Proporcionais (10%)": st.Proportional(initial_cash, proportion=0.10),
+        "Apostas Proporcionais (25%)": st.Proportional(initial_cash, proportion=0.25),
+        "Apostas Proporcionais (50%)": st.Proportional(initial_cash, proportion=0.50),
+        "Apostas Proporcionais (75%)": st.Proportional(initial_cash, proportion=0.75),
+        "Apostas Proporcionais (90%)": st.Proportional(initial_cash, proportion=0.90),
+    }
+
+    for name, strategy in strategies.items():
+        manager = Manager(
+            initial_cash,
+            strategy.initial_bet,
+            evaluator.y_pred_trend,
+            evaluator.y_return,
+        )
+        results = manager.run(strategy)
+        plot.strategy(results, name)
 
 
 if __name__ == "__main__":

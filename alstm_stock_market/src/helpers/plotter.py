@@ -1,5 +1,6 @@
 import numpy as np
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 import alstm_stock_market.src.model.params as p
 from alstm_stock_market.src.helpers.utils import save_image
@@ -9,12 +10,14 @@ class Plotter:
     def __init__(self, save=True):
         self.save = save
 
-    def _gen_base_layout(self, title, xlabel, ylabel, legend_pos="br"):
+    def _gen_base_layout(self, title="", xlabel="", ylabel="", legend_pos="br"):
         legend_coordinates = {
             "tl": {"x": 0, "y": 1, "xanchor": "left", "yanchor": "top"},
             "tr": {"x": 1, "y": 1, "xanchor": "right", "yanchor": "top"},
             "bl": {"x": 0, "y": 0, "xanchor": "left", "yanchor": "bottom"},
             "br": {"x": 1, "y": 0, "xanchor": "right", "yanchor": "bottom"},
+            "mr": {"x": 1, "y": 0.5, "xanchor": "right", "yanchor": "middle"},
+            "ml": {"x": 0, "y": 0.5, "xanchor": "left", "yanchor": "middle"},
         }
         return go.Layout(
             title=title,
@@ -33,6 +36,7 @@ class Plotter:
         title="Gráfico de Linhas",
         xlabel="x",
         ylabel="y",
+        return_only=False,
     ):
         plot_data = []
         for y, legend in zip(Y, legends):
@@ -41,12 +45,14 @@ class Plotter:
         layout = self._gen_base_layout(title, xlabel, ylabel, legend_pos)
 
         fig = go.Figure(data=plot_data, layout=layout)
-        fig.show()
 
+        if return_only:
+            return fig
         if self.save:
             save_image(fig, title)
+        fig.show()
 
-    def _plot_double_scale_heatmap(
+    def _plot_true_false_heatmap(
         self,
         x,
         y,
@@ -54,6 +60,7 @@ class Plotter:
         title="Mapa de calor",
         xlabel="x",
         ylabel="y",
+        return_only=False,
     ):
         true_data = np.array([[Z[0, 0], np.nan], [np.nan, Z[1, 1]]])
         false_data = np.array([[np.nan, Z[0, 1]], [Z[1, 0], np.nan]])
@@ -96,10 +103,12 @@ class Plotter:
         layout = self._gen_base_layout(title, xlabel, ylabel)
         layout["annotations"] = annotations
         fig = go.Figure(data=[heatmap_true, heatmap_false], layout=layout)
-        fig.show()
 
+        if return_only:
+            return fig
         if self.save:
             save_image(fig, title)
+        fig.show()
 
     def _plot_histograms(
         self,
@@ -109,6 +118,7 @@ class Plotter:
         title="Histograma",
         xlabel="Classes",
         ylabel="Ocorrências",
+        return_only=False,
     ):
         plot_data = []
         for data, name in zip(x, legends):
@@ -118,10 +128,40 @@ class Plotter:
         fig = go.Figure(data=plot_data, layout=layout)
         fig.update_layout(barmode="overlay")
         fig.update_traces(opacity=0.5)
-        fig.show()
 
+        if return_only:
+            return fig
         if self.save:
             save_image(fig, title)
+        fig.show()
+
+    def _plot_bars(
+        self,
+        x,
+        Y,
+        legends,
+        legend_pos="tr",
+        title="Gráfico de Barras",
+        xlabel="x",
+        ylabel="y",
+        colors=[],
+        return_only=False,
+    ):
+        plot_data = []
+        for i, (y, legend) in enumerate(zip(Y, legends)):
+            bar = go.Bar(x=x, y=y, name=legend)
+            if colors:
+                bar.update(marker_color=colors[i])
+            plot_data.append(bar)
+
+        layout = self._gen_base_layout(title, xlabel, ylabel, legend_pos)
+        fig = go.Figure(data=plot_data, layout=layout)
+
+        if return_only:
+            return fig
+        if self.save:
+            save_image(fig, title)
+        fig.show()
 
     def wavelet_results(self, pre):
         self._plot_lines(
@@ -202,7 +242,7 @@ class Plotter:
         )
 
     def confusion_matrix(self, matrix):
-        self._plot_double_scale_heatmap(
+        self._plot_true_false_heatmap(
             x=["Previu subida", "Previu queda"],
             y=["Índice subiu", "Índice caiu"],
             Z=np.reshape(list(matrix.values()), (2, 2)),
@@ -233,3 +273,76 @@ class Plotter:
             xlabel="Data",
             ylabel="Spread (%)",
         )
+
+    def strategy(self, results, name):
+        bankroll = results["bankroll"]
+        bets = results["bets"]
+        gains_losses = results["gains_losses"]
+        rounds = np.arange(1, len(bets) + 1, 1)
+
+        bankroll_fig = self._plot_lines(
+            x=rounds,
+            Y=[bankroll],
+            legends=[""],
+            title="Caixa",
+            xlabel="Rodada",
+            ylabel="Valor (R$)",
+            return_only=True,
+        )
+
+        bets_fig = self._plot_bars(
+            x=rounds,
+            Y=[bankroll, bets],
+            legends=["Caixa", "Aposta"],
+            title="Apostas",
+            xlabel="Rodada",
+            ylabel="Valor (R$)",
+            colors=[
+                ["#636EFA"] * rounds[-1], # Default blue
+                ["#FFA200"] * rounds[-1], # Orange
+            ],
+            return_only=True,
+        )
+
+        gains_losses_fig = self._plot_bars(
+            x=rounds,
+            Y=[gains_losses],
+            legends=[""],
+            title="Ganhos & Perdas",
+            xlabel="Rodada",
+            ylabel="Valor (R$)",
+            colors=[["green" if v > 0 else "red" for v in gains_losses]],
+            return_only=True,
+        )
+
+        title = f"Desempenho financeiro utilizando a estratégia {name}"
+        sub_figs = [bankroll_fig, bets_fig, gains_losses_fig]
+
+        layout = self._gen_base_layout(
+            title=title,
+            legend_pos="mr",
+        )
+
+        fig = make_subplots(
+            figure=go.Figure(layout=layout),
+            rows=len(sub_figs),
+            cols=1,
+            subplot_titles=("Caixa", "Apostas", "Ganhos & Perdas"),
+            x_title="Rodada",
+            vertical_spacing=0.06,
+            shared_xaxes=True,
+        )
+
+        for i, plot in enumerate(sub_figs):
+            for trace in plot.data:
+                trace.showlegend = False
+                if plot == bets_fig:
+                    trace.showlegend = True
+                fig.add_trace(trace, row=i + 1, col=1)
+
+        fig.update_layout(showlegend=True, barmode="overlay")
+        fig.update_yaxes(title_text="Valor (R$)", col=1)
+
+        if self.save:
+            save_image(fig, title)
+        fig.show()
