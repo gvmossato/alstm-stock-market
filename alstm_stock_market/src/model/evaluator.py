@@ -20,16 +20,16 @@ class Evaluator:
 
     def _calc_metrics(self):
         n = len(self.y)
-        y_resid = np.sum((self.y - self.y_pred) ** 2)
+        y_resids = self.y - self.y_pred
 
         def rmse():
-            return np.sqrt(y_resid / n)
+            return np.sqrt(np.sum(y_resids**2) / n)
 
         def mae():
-            return np.sum(np.abs(self.y - self.y_pred)) / n
+            return np.sum(np.abs(y_resids)) / n
 
         def r2():
-            return 1 - y_resid / np.sum((self.y - np.mean(self.y)) ** 2)
+            return 1 - np.sum(y_resids**2) / np.sum((self.y - np.mean(self.y)) ** 2)
 
         def te():
             return np.sqrt(
@@ -48,12 +48,14 @@ class Evaluator:
         self.y_trend = self.y_return >= 0
         self.y_pred_trend = self.y_pred_return >= 0
 
-        self.confusion_matrix = {
-            "TP": np.logical_and(self.y_trend, self.y_pred_trend).sum(),
-            "FN": np.logical_and(self.y_trend, ~self.y_pred_trend).sum(),
-            "TN": np.logical_and(~self.y_trend, ~self.y_pred_trend).sum(),
-            "FP": np.logical_and(~self.y_trend, self.y_pred_trend).sum(),
-        }
+        self.confusion_matrix = (
+            {  # These indexes must match the ones in the confusion matrix plot
+                "TP": np.logical_and(self.y_trend, self.y_pred_trend).sum(),  # (0,0)
+                "FN": np.logical_and(self.y_trend, ~self.y_pred_trend).sum(),  # (0,1)
+                "FP": np.logical_and(~self.y_trend, self.y_pred_trend).sum(),  # (1,0)
+                "TN": np.logical_and(~self.y_trend, ~self.y_pred_trend).sum(),  # (1,1)
+            }
+        )
 
     def _calc_cumulative_return(self):
         self.cumulative_return = {
