@@ -3,18 +3,18 @@ from skopt.space import Categorical, Real
 
 import alstm_stock_market.src.manager.strategies as st
 import alstm_stock_market.src.model.params as p
+from alstm_stock_market.src.data.preprocessor import Preprocessor
 from alstm_stock_market.src.helpers.plotter import Plotter
 from alstm_stock_market.src.helpers.utils import cmd_args
 from alstm_stock_market.src.manager.manager import Manager
 from alstm_stock_market.src.model.evaluator import Evaluator
 from alstm_stock_market.src.model.model import Model
-from alstm_stock_market.src.model.preprocessor import Preprocessor
 
 
 def main():
     data = yf.download(p.ticker, start=p.start, end=p.end)
 
-    pre = Preprocessor(data)
+    pre = Preprocessor(data, p.sets_sizes)
     pre.run()
 
     args = cmd_args()
@@ -52,25 +52,26 @@ def main():
     model.fit(
         pre.X_train,
         pre.y_train,
-        pre.X_validation,
-        pre.y_validation,
+        pre.X_valdn,
+        pre.y_valdn,
     )
 
-    plot.learning_curve(model)
+    if not args.load_weights:
+        plot.learning_curve(model)
 
     pred_train = model.predict(pre.X_train)
-    pred_validation = model.predict(pre.X_validation)
+    pred_valdn = model.predict(pre.X_valdn)
     pred_test = model.predict(pre.X_test)
 
     plot.prediction_train(pre, pred_train)
-    plot.prediction_validation(pre, pred_validation)
+    plot.prediction_valdn(pre, pred_valdn)
     plot.prediction_test(pre, pred_test)
 
     evaluator = Evaluator(
         pre.y_test,
         pred_test,
-        pre.target_normalization_mean,
-        pre.target_normalization_std,
+        pre.target_norm_mean,
+        pre.target_norm_std,
     )
     evaluator.run()
 

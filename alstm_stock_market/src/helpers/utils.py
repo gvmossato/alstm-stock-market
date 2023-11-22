@@ -45,3 +45,7 @@ def get_latest_weights():
 def save_weights(model):
     path = os.path.join(os.environ["WEIGHTS"], f"{now}_weights.h5")
     model.save_weights(path)
+
+
+def reverse_normalize(data, mean, std):
+    return std * data + mean

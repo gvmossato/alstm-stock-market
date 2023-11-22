@@ -3,7 +3,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 import alstm_stock_market.src.model.params as p
-from alstm_stock_market.src.helpers.utils import save_image
+from alstm_stock_market.src.helpers.utils import reverse_normalize, save_image
 
 
 class Plotter:
@@ -202,17 +202,23 @@ class Plotter:
     def prediction_train(self, pre, pred):
         self._plot_lines(
             x=pre.dates_train,
-            Y=[pre.label_train, pre.reverse_normalize(pred, p.target)],
+            Y=[
+                pre.label_train,
+                reverse_normalize(pred, pre.target_norm_mean, pre.target_norm_std),
+            ],
             legends=["Real", "Predição"],
             title="Resultado da predição nos dados de treino",
             xlabel="Data",
             ylabel="Preço",
         )
 
-    def prediction_validation(self, pre, pred):
+    def prediction_valdn(self, pre, pred):
         self._plot_lines(
-            x=pre.dates_validation,
-            Y=[pre.label_validation, pre.reverse_normalize(pred, p.target)],
+            x=pre.dates_valdn,
+            Y=[
+                pre.label_valdn,
+                reverse_normalize(pred, pre.target_norm_mean, pre.target_norm_std),
+            ],
             legends=["Real", "Predição"],
             legend_pos="tr",
             title="Resultado da predição nos dados de validação",
@@ -223,7 +229,10 @@ class Plotter:
     def prediction_test(self, pre, pred):
         self._plot_lines(
             x=pre.dates_test,
-            Y=[pre.label_test, pre.reverse_normalize(pred, p.target)],
+            Y=[
+                pre.label_test,
+                reverse_normalize(pred, pre.target_norm_mean, pre.target_norm_std),
+            ],
             legends=["Real", "Predição"],
             title="Resultado da predição nos dados de teste",
             xlabel="Data",
@@ -298,8 +307,8 @@ class Plotter:
             xlabel="Rodada",
             ylabel="Valor (R$)",
             colors=[
-                ["#636EFA"] * rounds[-1], # Default blue
-                ["#FFA200"] * rounds[-1], # Orange
+                ["#636EFA"] * rounds[-1],  # Default blue
+                ["#FFA200"] * rounds[-1],  # Orange
             ],
             return_only=True,
         )
