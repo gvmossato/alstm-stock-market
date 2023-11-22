@@ -126,7 +126,7 @@ class Model:
                 f"Invalid tuning  method. Valid methods are: {', '.join(methods.keys())}"
             )
 
-    def fit(self, X_train, y_train, X_validation, y_validation):
+    def fit(self, X_train, y_train, X_valdn, y_valdn):
         if self.load_weights:
             return None
 
@@ -135,7 +135,7 @@ class Model:
             y_train,
             epochs=p.epochs,
             batch_size=p.batch_size,
-            validation_data=(X_validation, y_validation),
+            validation_data=(X_valdn, y_valdn),
             validation_freq=1,
             shuffle=False,
             verbose=1,
@@ -170,5 +170,21 @@ class Model:
         save_txt(bayes_search_result, "BayesSearch_results")
         return best
 
-    def predict(self, X):
+    def predict(self, X, name="y_pred"):
         return self.model.predict(X, batch_size=p.batch_size).flatten()
+
+    def incremental_train(self, X_train, y_train):
+        if not self.load_weights:
+            print("Model weights were not loaded. Loading latest weights.")
+            self.model.load_weights(get_latest_weights())
+
+        self.model.fit(
+            X_train,
+            y_train,
+            epochs=p.incremental_epochs,
+            batch_size=p.batch_size,
+            shuffle=False,
+            verbose=1,
+        )
+
+        save_weights(self.model)

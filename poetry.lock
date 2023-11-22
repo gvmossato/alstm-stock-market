@@ -56,6 +56,20 @@ html5lib = ["html5lib"]
 lxml = ["lxml"]
 
 [[package]]
+name = "bizdays"
+version = "1.0.9"
+description = "Functions to handle business days calculations"
+optional = false
+python-versions = ">=3.8,<4.0"
+files = [
+    {file = "bizdays-1.0.9-py3-none-any.whl", hash = "sha256:e14c67501c4e26af6f71bb8d1ddcaf023086c7ded9347cb6a87bcc1c0d7a3c9f"},
+    {file = "bizdays-1.0.9.tar.gz", hash = "sha256:57456f80dc12d2b0df9c19738a48a2995a57c407018e37fc7941d07fd580e46a"},
+]
+
+[package.dependencies]
+pandas-market-calendars = "4.3.1"
+
+[[package]]
 name = "black"
 version = "23.10.1"
 description = "The uncompromising code formatter."
@@ -231,6 +245,20 @@ files = [
 colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
 [[package]]
+name = "cloudant"
+version = "2.15.0"
+description = "Cloudant / CouchDB Client Library"
+optional = false
+python-versions = "*"
+files = [
+    {file = "cloudant-2.15.0-py3-none-any.whl", hash = "sha256:158ce109eb6f5c31739a4169061e33fb0ad9bd1545395162e111e696fa5916e2"},
+    {file = "cloudant-2.15.0.tar.gz", hash = "sha256:ac2f5136e4f8fba5c838643603b5272c5cfb6ed2240edb580fe3c2c5a5fcda63"},
+]
+
+[package.dependencies]
+requests = ">=2.7.0,<3.0.0"
+
+[[package]]
 name = "colorama"
 version = "0.4.6"
 description = "Cross-platform colored terminal text."
@@ -240,6 +268,29 @@ files = [
     {file = "colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
     {file = "colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
 ]
+
+[[package]]
+name = "exchange-calendars"
+version = "4.5"
+description = "Calendars for securities exchanges"
+optional = false
+python-versions = "~=3.9"
+files = [
+    {file = "exchange_calendars-4.5-py3-none-any.whl", hash = "sha256:81e9d8446f091b1068815e59413e70693e6e053564d498ea47da1a97b25d946d"},
+    {file = "exchange_calendars-4.5.tar.gz", hash = "sha256:81dc5f92c7ed164df7a15f0b23b3eb1c07e4f31562e659b437486b3379a0450c"},
+]
+
+[package.dependencies]
+korean-lunar-calendar = "*"
+numpy = "*"
+pandas = ">=1.5"
+pyluach = "*"
+python-dateutil = "*"
+toolz = "*"
+tzdata = "*"
+
+[package.extras]
+dev = ["flake8", "hypothesis", "pip-tools", "pytest", "pytest-benchmark", "pytest-xdist"]
 
 [[package]]
 name = "flatbuffers"
@@ -552,6 +603,17 @@ python-versions = ">=3.9"
 files = [
     {file = "keras-2.14.0-py3-none-any.whl", hash = "sha256:d7429d1d2131cc7eb1f2ea2ec330227c7d9d38dab3dfdf2e78defee4ecc43fcd"},
     {file = "keras-2.14.0.tar.gz", hash = "sha256:22788bdbc86d9988794fe9703bb5205141da797c4faeeb59497c58c3d94d34ed"},
+]
+
+[[package]]
+name = "korean-lunar-calendar"
+version = "0.3.1"
+description = "Korean Lunar Calendar"
+optional = false
+python-versions = "*"
+files = [
+    {file = "korean_lunar_calendar-0.3.1-py3-none-any.whl", hash = "sha256:392757135c492c4f42a604e6038042953c35c6f449dda5f27e3f86a7f9c943e5"},
+    {file = "korean_lunar_calendar-0.3.1.tar.gz", hash = "sha256:eb2c485124a061016926bdea6d89efdf9b9fdbf16db55895b6cf1e5bec17b857"},
 ]
 
 [[package]]
@@ -966,6 +1028,26 @@ test = ["hypothesis (>=6.46.1)", "pytest (>=7.3.2)", "pytest-asyncio (>=0.17.0)"
 xml = ["lxml (>=4.8.0)"]
 
 [[package]]
+name = "pandas-market-calendars"
+version = "4.3.1"
+description = "Market and exchange trading calendars for pandas"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pandas_market_calendars-4.3.1-py3-none-any.whl", hash = "sha256:a7c67508ede43e91f62c54c7bbc134a3b422fd17d68b4516e52fd281c4ec8951"},
+    {file = "pandas_market_calendars-4.3.1.tar.gz", hash = "sha256:c5da9865595c5596c5fab9994d796fd0b4878d4d7cf790dc7f4c22c74d35a7ea"},
+]
+
+[package.dependencies]
+exchange-calendars = ">=3.3"
+pandas = ">=1.1"
+python-dateutil = "*"
+pytz = "*"
+
+[package.extras]
+test = ["pytest"]
+
+[[package]]
 name = "pathspec"
 version = "0.11.2"
 description = "Utility library for gitignore style pattern matching of file paths."
@@ -1079,6 +1161,21 @@ files = [
 
 [package.dependencies]
 pyasn1 = ">=0.4.6,<0.6.0"
+
+[[package]]
+name = "pyluach"
+version = "2.2.0"
+description = "A Python package for dealing with Hebrew (Jewish) calendar dates."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "pyluach-2.2.0-py3-none-any.whl", hash = "sha256:d1eb49d6292087e9290f4661ae01b60c8c933704ec8c9cef82673b349ff96adf"},
+    {file = "pyluach-2.2.0.tar.gz", hash = "sha256:9063a25387cd7624276fd0656508bada08aa8a6f22e8db352844cd858e69012b"},
+]
+
+[package.extras]
+doc = ["sphinx (>=6.1.3,<6.2.0)", "sphinx_rtd_theme (>=1.2.0,<1.3.0)"]
+test = ["beautifulsoup4", "flake8", "pytest", "pytest-cov"]
 
 [[package]]
 name = "python-dateutil"
@@ -1787,6 +1884,17 @@ files = [
 ]
 
 [[package]]
+name = "toolz"
+version = "0.12.0"
+description = "List processing tools and functional utilities"
+optional = false
+python-versions = ">=3.5"
+files = [
+    {file = "toolz-0.12.0-py3-none-any.whl", hash = "sha256:2059bd4148deb1884bb0eb770a3cde70e7f954cfbbdc2285f1f2de01fd21eb6f"},
+    {file = "toolz-0.12.0.tar.gz", hash = "sha256:88c570861c440ee3f2f6037c4654613228ff40c93a6c25e0eba70d17282c6194"},
+]
+
+[[package]]
 name = "typing-extensions"
 version = "4.8.0"
 description = "Backported and Experimental Type Hints for Python 3.8+"
@@ -1977,4 +2085,4 @@ requests = ">=2.31"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.12.0"
-content-hash = "e649884876187feb437a8dc047308ef0793b82a55caacbe90e91bed2f7cb796b"
+content-hash = "cdbc3af623d56c4a25f044aec3ed1c69da69591ae2b349849a01d8dc1ceb1e66"

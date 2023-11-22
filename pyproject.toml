@@ -7,7 +7,8 @@ readme = "README.md"
 packages = [{ include = "alstm_stock_market" }]
 
 [tool.poetry.scripts]
-start = "alstm_stock_market.run:main"
+model = "alstm_stock_market.run:main"
+app = "alstm_stock_market.src.app.app:main"
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12.0"
@@ -21,6 +22,8 @@ yfinance = "^0.2.31"
 kaleido = "0.2.1"
 scikit-optimize = "^0.9.0"
 python-dotenv = "^1.0.0"
+bizdays = "^1.0.9"
+cloudant = "^2.15.0"
 
 # Workaround for issue between poetry and tensorflow
 # @see: https://github.com/python-poetry/poetry/issues/8271
