@@ -9,7 +9,7 @@ from cloudant.client import Cloudant
 
 import alstm_stock_market.src.model.params as p
 from alstm_stock_market.src.data.preprocessor import Preprocessor
-from alstm_stock_market.src.helpers.utils import reverse_normalize
+from alstm_stock_market.src.helpers.utils import log_app, reverse_normalize
 from alstm_stock_market.src.model.model import Model
 
 dotenv.load_dotenv()
@@ -25,11 +25,16 @@ class App:
         self.calendar = Calendar.load(filename=os.environ["CALENDAR"])
 
         if not self.calendar.isbizday(self.pred_date):
-            raise ValueError(f"{self.pred_date} is not a business day. Exiting...")
+            result = {
+                "status": "error",
+                "message": f"{self.pred_date} is not a business day.",
+            }
+            log_app(result)
+            raise ValueError(result)
 
         self.interval_start = self.calendar.offset(
             self.pred_date,
-            -p.time_step,
+            -(p.time_step+1),
         ).strftime("%Y-%m-%d")
 
         self.days_since_training = self.calendar.diff(
@@ -40,15 +45,10 @@ class App:
         )[0]
 
     def _incremental_fit(self):
-        last_full_history = self.calendar.offset(
-            self.pred_date,
-            -1,
-        ).strftime("%Y-%m-%d")
-
         train_data = yf.download(
             p.ticker,
             start=os.environ["MAX_TRAINING_DATE"],
-            end=last_full_history,
+            end=self.pred_date,
         )
 
         pre = Preprocessor(train_data, {"train": 1, "valdn": 0, "test": 0})
@@ -57,19 +57,27 @@ class App:
         model = Model(load_weights=True)
         model.incremental_train(pre.X_train, pre.y_train)
 
-        os.environ.update({"MAX_TRAINING_DATE": last_full_history})
+        os.environ["MAX_TRAINING_DATE"] = pre.dates[-1].strftime("%Y-%m-%d")
+        dotenv.set_key(
+            os.environ["ENV_FILE_PATH"],
+            "MAX_TRAINING_DATE",
+            os.environ["MAX_TRAINING_DATE"],
+        )
 
     def _make_prediction(self):
         pred_data = yf.download(
             p.ticker,
             start=self.interval_start,
             end=self.pred_date,
-        )
+        ).tail(p.time_step)
 
-        if len(pred_data) != p.time_step:
-            raise ValueError(
-                f"Expected {p.time_step} days, got {len(pred_data)}. Exiting..."
-            )
+        if len(pred_data) < p.time_step:
+            result = {
+                "status": "error",
+                "message": f"Expected {p.time_step} days for {self.pred_date}, got {len(pred_data)}",
+            }
+            log_app(result)
+            raise ValueError(result)
 
         self.close_prices = pred_data["Close"]
 
@@ -111,12 +119,24 @@ class App:
         for doc in self.interval_docs:
             if doc["date"] == self.pred_date:
                 if np.isclose(doc["pred_close"], self.pred_close):
-                    print("FOUND PRED, NO UPDATE NEEDED", doc)
+                    result = {
+                        "status": "success",
+                        "message": f"Prediction for {self.pred_date} already exists, no update needed",
+                        "data": doc,
+                    }
+                    log_app(result)
                     return
 
                 doc["pred_close"] = self.pred_close
                 self.database[doc["_id"]].update(doc)
-                print("UPDATED PRED", doc)
+                self.database[doc["_id"]].save()
+
+                result = {
+                    "status": "success",
+                    "message": f"Updated prediction for {self.pred_date}",
+                    "data": doc,
+                }
+                log_app(result)
                 return
 
         doc = self.database.create_document(
@@ -125,7 +145,12 @@ class App:
                 "pred_close": self.pred_close,
             }
         )
-        print("CREATED PRED", doc)
+        result = {
+            "status": "success",
+            "message": f"Created prediction for {self.pred_date}",
+            "data": doc,
+        }
+        log_app(result)
 
     def _write_close_prices(self):
         for date, price in self.close_prices.items():
@@ -137,10 +162,19 @@ class App:
                         doc["close"] = price
                         self.database[doc["_id"]].update(doc)
                         self.database[doc["_id"]].save()
-                        print("UPSERTED CLOSE", doc)
+                        result = {
+                            "status": "success",
+                            "message": f"Updated close for {date}",
+                            "data": doc,
+                        }
+                        log_app(result)
                         break
 
-                    print("FOUND CLOSE, NO UPDATE NEEDED", doc)
+                    result = {
+                        "status": "success",
+                        "message": f"Close for {date} already exists, no update needed",
+                        "data": doc,
+                    }
                     break
 
     def run(self):

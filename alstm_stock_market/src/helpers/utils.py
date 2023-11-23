@@ -49,3 +49,10 @@ def save_weights(model):
 
 def reverse_normalize(data, mean, std):
     return std * data + mean
+
+
+def log_app(data):
+    app_logs_path = os.path.join(os.environ["LOGS"], "app_logs.txt")
+
+    with open(app_logs_path, "a") as file:
+        file.write(f"{now}: {data}\n")
