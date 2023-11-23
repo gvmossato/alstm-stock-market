@@ -1,7 +1,7 @@
 import tensorflow.keras.backend as K
 from dotenv import load_dotenv
 from scikeras.wrappers import KerasRegressor
-from sklearn.model_selection import TimeSeriesSplit
+from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
 from skopt import BayesSearchCV
 from tensorflow.keras.layers import LSTM, Dense, Dropout, Input, Layer
 from tensorflow.keras.models import Sequential
@@ -141,6 +141,31 @@ class Model:
             verbose=1,
         )
         save_weights(self.model)
+
+    def _grid_search(self, X_train, y_train, param_grid):
+        estimator = KerasRegressor(
+            model=create_model,
+            epochs=p.epochs,
+            loss=p.loss_function,
+            shuffle=False,
+            verbose=0,
+        )
+        grid_search = GridSearchCV(
+            estimator=estimator,
+            param_grid=param_grid,
+            scoring=f"neg_{p.loss_function}",
+            n_jobs=-1,
+            cv=TimeSeriesSplit(n_splits=3),
+        )
+        grid_search_result = grid_search.fit(X_train, y_train)
+
+        best = {
+            "score": grid_search_result.best_score_,
+            "params": grid_search_result.best_params_,
+        }
+
+        save_txt(grid_search_result, "GridSearch_results")
+        return best
 
     def _bayesian_search(self, X_train, y_train, param_space):
         estimator = KerasRegressor(

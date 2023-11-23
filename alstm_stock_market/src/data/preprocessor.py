@@ -23,7 +23,7 @@ class Preprocessor:
             f"AVISO: {trim_len} dia(s) removido(s)"
             f"para criar sequências de {p.time_step} dias"
         )
-        return data[trim_len:]
+        return data.iloc[trim_len:, :]
 
     def _denoise(self):
         def calc_universal_threshold(finnest_coeffs):
@@ -95,13 +95,19 @@ class Preprocessor:
         self.X_test = self.X[valdn_limit:]
         self.y_test = self.y[valdn_limit:]
 
-        self.dates_train = self.dates[:train_limit]
-        self.dates_valdn = self.dates[train_limit:valdn_limit]
-        self.dates_test = self.dates[valdn_limit:]
+        self.dates_train = self.dates[p.time_step : train_limit]
+        self.dates_valdn = self.dates[p.time_step + train_limit : valdn_limit]
+        self.dates_test = self.dates[p.time_step + valdn_limit :]
 
-        self.label_train = self.data.iloc[:train_limit, self.target_col_idx]
-        self.label_valdn = self.data.iloc[train_limit:valdn_limit, self.target_col_idx]
-        self.label_test = self.data.iloc[valdn_limit:, self.target_col_idx]
+        self.label_train = self.data.iloc[
+            p.time_step : train_limit, self.target_col_idx
+        ]
+        self.label_valdn = self.data.iloc[
+            p.time_step + train_limit : valdn_limit, self.target_col_idx
+        ]
+        self.label_test = self.data.iloc[
+            p.time_step + valdn_limit :, self.target_col_idx
+        ]
 
     def run(self):
         self._denoise()
