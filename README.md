@@ -129,9 +129,9 @@ A seção de resultados se prolonga por algumas dezenas de páginas da monografi
 Qualitativamente, os resultados no conjunto de teste e o retorno acumulado ao longo do período são bastante fidedignos ao que se observou no mercado para à época:
 
 <p align="center">
-  <img src="https://i.ibb.co/71mF1gB/test-results.png" alt="test-results" width="400px" />
+  <img src="https://i.ibb.co/71mF1gB/test-results.png" alt="test-results" width="350px" />
   <span>       </span>
-  <img src="https://i.ibb.co/mhkQhh6/return-results.png" alt="return-results" width="400px" />
+  <img src="https://i.ibb.co/mhkQhh6/return-results.png" alt="return-results" width="350px" />
 </p>
 
 Optamos ainda por fazer um estudo comparativo do mecanismo de atenção, testando variações desse: um rede sem atenção, uma rede com a atenção como proposta no artigo de referência (benchmark) e a "atenção clássica", proposta no artigo inaugural [Attention Is All You Need](https://arxiv.org/abs/1706.03762):
@@ -171,9 +171,9 @@ Como sintetiza a tabela anterior, o conjunto de teste do nosso modelo encontrava
 Todavia, mesmo após a normalização, com exceção do $R^2$, não superamos o benchmark. Não obstante, esses resultados forneceram um *insight* valioso: embora não estejamos acertando adequadamente o preço de fechamento, estamos fazendo uma leitura muito satisfatória da tendência. Ora, vamos então aprofundar essa análise:
 
 <p align="center">
-  <img src="https://i.ibb.co/C77TdZZ/trend-results.png" alt="trend-results" width="400px" />
+  <img src="https://i.ibb.co/C77TdZZ/trend-results.png" alt="trend-results" width="350px" />
   <span>       </span>
-  <img src="https://i.ibb.co/Fz7XPkn/confusion-matrix.png" alt="confusion-matrix" width="400px" />
+  <img src="https://i.ibb.co/Fz7XPkn/confusion-matrix.png" alt="confusion-matrix" width="350px" />
 </p>
 
 Constatamos que o modelo de fato parece seguir muito bem as oscilações, prevendo com consistência quando o mercado irá subir ou cair:
