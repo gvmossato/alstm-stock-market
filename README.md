@@ -19,6 +19,8 @@
 
 <br />
 
+<p align="center">$${\color[rgb]{1,0.75,0}\text{\LARGE Previsão do Índice S\&P 500 Utilizando LSTM e Mecanismos de Atenção}}$$</p>
+
 <p align="center">
 Projeto desenvolvido como <b>Trabalho de Conclusão de Curso</b> durante o último ano de graduação em <b>Engenharia Mecatrônica</b> na Escola Politécnica da Universidade de São Paulo (EP-USP)
 </p>
@@ -33,7 +35,7 @@ Neste repositório:
 
 * <a href="#-problemática--motivação">⁉️ Problemática & Motivação</a> - Porquês e objetivos
 
-* <a href="#-dados--pre-processamento">⚙️ Dados & Pré-Processamento</a> - Pipeline de dados
+* <a href="#-dados--pré-processamento">⚙️ Dados & Pré-Processamento</a> - Pipeline de dados
 
 * <a href="#-otimização">🦾 Otimização</a> - Ajuste dos hiperparâmetros
 
@@ -53,17 +55,18 @@ Neste repositório:
 > *History never repeats itself, but it does often rhyme*  
 > [Mark Twain](https://pt.wikipedia.org/wiki/Mark_Twain)
 
-Este repositório contém o código do estudo sobre a **previsão do índice S&P 500**, no qual foi desenvolvido um modelo utilizando **células de memória de longo-curto prazo (LSTM) combinadas com mecanismos de atenção**. O modelo passou por otimizações com técnicas de Grid Search e Bayesian Seach, demonstrando um desempenho promissor na previsão de preços de fechamento.
+Esse repositório contém o código do estudo para previsão do índice S&P 500, para o qual foi desenvolvido um modelo utilizando células de memória de longo-curto prazo (LSTM) combinadas com mecanismos de atenção. O modelo passou por otimizações com técnicas de grid search e bayesian seach, demonstrando um desempenho promissor na previsão dos preços de fechamento.
 
-O trabalho foi majoritariamente inspirado no artigo **[Forecasting stock prices with long-short term memory neural network based on attention mechanism](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0227222)** (2020) de Jiayu Qiu, Bin Wang e Changjun Zhou, recebendo honras como um dos cinco melhores projetos de 2023 no curso.
+O trabalho foi majoritariamente inspirado no artigo **[Forecasting stock prices with long-short term memory neural network based on attention mechanism](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0227222)** (2020) de Jiayu Qiu, Bin Wang e Changjun Zhou, recebendo honras como um dos cinco melhores projetos de 2023 no curso de Engenharia Mecatrônica.
 
 No estudo também foram exploradas aplicações mais práticas do modelo através de técnicas de gestão de banca, avaliando a rentabilidade das previsões em um ambiente controlado e com resultados igualmente promissores.
 
-#### 📕 **[Versão final da monografia](https://github.com/gvmossato/alstm-stock-market/blob/main/misc/Previs%C3%A3o%20do%20%C3%8Dndice%20S%26P%20500%20Utilizando%20LSTM%20e%20Mecanismos%20de%20Aten%C3%A7%C3%A3o.pdf)**
+> [!IMPORTANT]
+> 📕 **[Versão final da monografia](https://github.com/gvmossato/alstm-stock-market/blob/main/misc/Previs%C3%A3o%20do%20%C3%8Dndice%20S%26P%20500%20Utilizando%20LSTM%20e%20Mecanismos%20de%20Aten%C3%A7%C3%A3o.pdf)**
 
 ## ⁉️ Problemática & Motivação
 
-O aprofundamento financeiro do Brasil, marcado pela liberalização, desregulamentação e inovação, catalisou um aumento expressivo no número de participantes do mercado financeiro, incluindo também pequenas gestoras e investidores individuais. Entretanto, esse crescimento acompanha também uma ascensão da desinformação, exacerbada pela vulnerabilidade à fraude e pela difusão de análises de fontes não especializadas.
+O aprofundamento financeiro do Brasil, marcado pela liberalização, aumento de crédito e bancarização da população, catalisou um aumento expressivo no número de participantes do mercado financeiro, incluindo também pequenas gestoras e investidores individuais. Entretanto, esse crescimento acompanha também uma ascensão da desinformação, exacerbada pela difusão de conteúdo não verificado em mídias sociais e demais meios.
 
 <p align="center"> 
   <img src="https://i.ibb.co/BjvJbqq/decision-making-process.png" alt="decision-making-process" height="190px" />
@@ -71,15 +74,22 @@ O aprofundamento financeiro do Brasil, marcado pela liberalização, desregulame
   <img src="https://i.ibb.co/XkNtbC2/fraud.png" alt="fraud" height="190px" />
 </p>
 
-Em paralelo, entende-se que a economia global é, de certo modo, refletido pelo índice S&P 500 devido à vasta operação internacional das empresas listadas nesse. Tal cenário abre espaço para que modelos preditivos possam empoderar o processo de tomada de decisão de investimentos, especialmente para aqueles recém-chegados ao mercado.
+> Ao nível de confiança de 95%, o grupo vítimas possuiu proporção (...) significativamente maior apenas em criptomoedas e na opção não tenho investimentos.
 
-Assim, a motivação desse trabalho reside na necessidade de fortalecer o processo decisório no contexto complexo e volátil do mercado de ações. O modelo proposto busca ser uma ferramenta auxiliar, não substituindo, mas sim potencializando o raciocínio estratégico de investidores. Para tal, os recentes desenvolvimentos em mecanismos de atenção em redes neurais são aplicados aqui às séries temporais financeiras oferecendo aos investidores, especialmente aqueles com recursos limitados e acesso tardio a informações, uma fonte a mais para suas decisões.
+Essa dinâmica acaba revelando um recorte populacional que é muitas vezes inexperiente com investimentos e adentra esse universo diretamente através de mercados muito sofisticados (como o de criptomoedas) ou então que ficam expostos a práticas predatórias justamente em virtude da baixa familiaridade com o ambiente financeiro.
+
+Delineado esse contorno, entende-se para a concepção desse projeto que é necessário empoderar o processo de tomada de decisão de investimento dos indivíduos, em especial, daqueles recém chegados ao mercado. Tal cenário então abre espaço para que modelos preditivos possam emergir como auxiliares de investimentos, utilizando informações críticas e atualizadas capazes de influenciar diretamente as tendências do mercado. Nesse contexto, é feito uso do S&P 500: esse é, para além de um índice de ações estadunidenses, um indicador da economia global devido à vasta operação internacional das empresas nesse listadas.
+
+> *A US investor gets a lot of international exposure by either investing in  S&P 500 index funds or actively investing with the S&P 500 as the benchmark.*
+> [(De, 2013)](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2371340)
+
+A motivação desse trabalho reside então na necessidade de fortalecer o processo decisório no contexto complexo e volátil do mercado de ações. Sob a qual se propões um modelo que busca ser uma ferramenta auxiliar, não substituindo, mas sim potencializando, o raciocínio estratégico de investidores. Para tal, empresta-se dos recentes desenvolvimentos em LLMs uma simplificação dos mecanismos de atenção para aqui serem aplicados a séries temporais financeiras, provendo especialmente a investidores com recursos limitados e acesso tardio a informações, uma fonte auxiliar para suas decisões.
 
 ## ⚙️ Dados & Pré-Processamento
 
 Fluxograma simplificado do pré-processamento dos dados até serem consumidos pelo modelo:
 
-![dados](https://i.ibb.co/tmhPnPk/dados.png)
+![dados](https://i.ibb.co/f2xVg4n/dados.png)
 
 Conforme a imagem:
 
@@ -112,7 +122,7 @@ Um resumo dos testes encontra-se na tabela abaixo:
 
 A arquitetura proposta para o modelo de previsão do índice S&P 500 incorpora um total de **20 células LSTM**, em consonância com a janela de 20 dias que é analisada. Isto é, para uma janela móvel de 20 dias, são lidos [OHLC](https://www.investopedia.com/terms/o/ohlcchart.asp) + Fechamento Ajustado + Volume (quantidades), para então predizer o fechamento do 21º dia.
 
-![modelo](https://i.ibb.co/jk7DVzR/modelo.png)
+![modelo](https://i.ibb.co/jDRtvMg/modelo.png)
 
 Como msotra imagem anterior, após o processamento pelas células LSTM, as saídas são submetidas ao mecanismo de *[soft attention](https://stackoverflow.com/questions/35549588/soft-attention-vs-hard-attention)*. Esse mecanismo avalia as contribuições de cada célula LSTM e pondera sua influência, permitindo que a importância de momentos distintos no tempo seja diferenciada, ao invés de focar apenas na informação mais recente. Isso se baseia na premissa de que eventos passados dentro da janela de tempo podem ter relevância semelhante ou até maior do que os mais recentes.
 
@@ -231,7 +241,7 @@ Parâmetros opcionais:
 
 Para executar a **aplicação** para realizar previsões com os dados mais recentes disponíveis, sincronização com a nuvem e treinamentos incrementais (se necessário), utilize:
 
-```
+```css
 poetry run app
 ```
 
