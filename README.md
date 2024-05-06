@@ -230,7 +230,11 @@ Como um todo, a implementação do projeto pode ser segmentada entre duas grande
 
 2. **Aplicação**, uma plataforma web, hospedada em um outro [repositório dedicado](https://github.com/gvmossato/alstm-front), para proporcionar uma interface intuitiva e acessível o suficiente a fim de permitir que usuários comuns pudessem usufruir das predições do modelo sem conhecimento técnico em programação.
 
-> TODO: add repo image
+<p align="center">
+  <a href="https://www.github.com/gvmossato/alstm-front" target="_blank">
+    <img src="https://i.ibb.co/r3Tp4NM/front-repo-banner.png" alt="front-repo-banner" width="400px" />
+  </a>
+</p>
 
 A aplicação permaneceu operante até meados de abril de 2024, sendo incorporados os dados mais recentes disponíveis à época a cada **seis meses**, em treinamentos incrementais automáticos com **15 epochs** e integração ao [IBM Cloudant](https://www.ibm.com/br-pt/products/cloudant), provedor do banco de dados NoSQL utilizado.
 
