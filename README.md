@@ -27,6 +27,12 @@ Projeto desenvolvido como <b>Trabalho de Conclusão de Curso</b> durante o últi
 
 <br />
 
+<p align="center">
+  <img src="https://hatscripts.github.io/circle-flags/flags/us.svg" width="24">
+  <br />
+  <a href="./README.en.md"><b>View in English (TODO)</b></a>
+</p>
+
 ## 🔎 Sumário
 
 Neste repositório:
@@ -238,7 +244,7 @@ poetry run model [-t {grid,bayes}] [-w]
 
 Parâmetros opcionais:
 
-* `-t`, `--tuning`: especifica o método de otimização a ser executado. Se não especificado, o ajuste de parâmetros não será realizado. As configurações para cada tipo de ajuste devem ser definidas diretamente no código. Aceita:
+* `-t`, `--tuning`: especifica o método de otimização a ser executado. Se não especificado, o ajuste de parâmetros não será realizado. Aceita:
 
   * `grid`: utiliza o grid search para otimizar os parâmetros.
 
@@ -247,6 +253,9 @@ Parâmetros opcionais:
 * `-w`, `--load-weights`: carrega os pesos salvos da sessão de treinamento mais recente.
 
   * Padrão: `False` (não carrega os pesos automaticamente).
+
+> [!WARNING]
+> As configurações para cada tipo de ajuste devem ser definidas diretamente no código, em `./alstm_stock_market/run.py`
 
 <br />
 
@@ -306,3 +315,9 @@ Por fim, a pasta `images` é utilizada para salvar os plots em formatados vetori
 ## 🤝 Colaboradores
 
 Este projeto foi desenvolvido por [Gabriel Mossato](https://br.linkedin.com/in/gvmossato) em colaboração com [Paulino Fonseca](https://br.linkedin.com/in/paulinoveloso), ambos à época graduandos sob orientação do [Prof. Dr. Oswaldo Luiz do Valle Costa](https://bv.fapesp.br/en/pesquisador/191/oswaldo-luiz-do-valle-costa), pertencente ao Departamento de Engenharia Elétrica da Escola Politécnica da Universidade de São Paulo (EP-USP).
+
+<br />
+
+<p align="right">
+  <a href="#-sumário">⬆️ Voltar ao Início</a>
+</p>
