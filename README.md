@@ -19,7 +19,7 @@
 
 <br />
 
-<p align="center">$${\color[rgb]{1,0.75,0}\text{\LARGE Previsão do Índice S\&P 500 Utilizando LSTM e Mecanismos de Atenção}}$$</p>
+<p align="center">$${\color[rgb]{1,0.75,0}\text{\Large Previsão do Índice S\&P 500 Utilizando LSTM e Mecanismos de Atenção}}$$</p>
 
 <p align="center">
 Projeto desenvolvido como <b>Trabalho de Conclusão de Curso</b> durante o último ano de graduação em <b>Engenharia Mecatrônica</b> na Escola Politécnica da Universidade de São Paulo (EP-USP)
@@ -33,9 +33,9 @@ Neste repositório:
 
 * <a href="#-sobre">📜 Sobre</a> - Breve apresentação
 
-* <a href="#-problemática--motivação">⁉️ Problemática & Motivação</a> - Porquês e objetivos
+* <a href="#️-problemática--motivação">⁉️ Problemática & Motivação</a> - Porquês e objetivos
 
-* <a href="#-dados--pré-processamento">⚙️ Dados & Pré-Processamento</a> - Pipeline de dados
+* <a href="#️-dados--pré-processamento">⚙️ Dados & Pré-Processamento</a> - Pipeline de dados
 
 * <a href="#-otimização">🦾 Otimização</a> - Ajuste dos hiperparâmetros
 
@@ -83,7 +83,7 @@ Delineado esse contorno, entende-se para a concepção desse projeto que é nece
 > *A US investor gets a lot of international exposure by either investing in  S&P 500 index funds or actively investing with the S&P 500 as the benchmark.*
 > [(De, 2013)](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2371340)
 
-A motivação desse trabalho reside então na necessidade de fortalecer o processo decisório no contexto complexo e volátil do mercado de ações. Sob a qual se propões um modelo que busca ser uma ferramenta auxiliar, não substituindo, mas sim potencializando, o raciocínio estratégico de investidores. Para tal, empresta-se dos recentes desenvolvimentos em LLMs uma simplificação dos mecanismos de atenção para aqui serem aplicados a séries temporais financeiras, provendo especialmente a investidores com recursos limitados e acesso tardio a informações, uma fonte auxiliar para suas decisões.
+A motivação desse trabalho reside então na necessidade de fortalecer o processo decisório no contexto complexo e volátil do mercado de ações. Sob a qual se propõe um modelo que busca ser uma ferramenta auxiliar, não substituindo, mas sim potencializando, o raciocínio estratégico de investidores. Para tal, empresta-se dos recentes desenvolvimentos em LLMs uma simplificação dos mecanismos de atenção para aqui serem aplicados a séries temporais financeiras, provendo especialmente a investidores com recursos limitados e acesso tardio a informações, uma fonte auxiliar para suas decisões.
 
 ## ⚙️ Dados & Pré-Processamento
 
@@ -105,36 +105,37 @@ Conforme a imagem:
 
 ## 🦾 Otimização
 
-Como citado, realizamos a tunagem de hiperparâmetros em duas fases distintas: um Grid Search e Bayesian Search. No primeiro, buscamos explorar deterministicamente as redondezas do modelo apresentado no artigo base utilizado. Assim, com um total de **48 combinações únicas** de hiperparâmetros avaliadas utilizando a metodologia de [validação cruzada com k-dobras](https://medium.com/@soumyachess1496/cross-validation-in-time-series-566ae4981ce4) obtivemos **144 execuções distintas** (k=3).
+Como citado, realizamos a tunagem de hiperparâmetros em duas fases distintas: grid search e bayesian search. No primeiro, buscamos explorar deterministicamente as redondezas do modelo apresentado no artigo base utilizado. Assim, com um total de **48 combinações únicas** de hiperparâmetros avaliadas utilizando a metodologia de [validação cruzada com k-dobras](https://medium.com/@soumyachess1496/cross-validation-in-time-series-566ae4981ce4) obtivemos **144 execuções distintas** (k=3).
 
-Na sequência, o Bayesian Search foi implementado com base nas combinações de hiperparâmetros mais promissoras do Grid Search, em uma tentativa de refinar a rede. Nesse ponto, decidimos fixar o tamanho do estado oculto em 20, baseando-nos nas descobertas do Grid Search e na sintonia com o tamanho de entrada de dados (20 dias úteis). Ao longo de **100 configurações** de redes, avaliamos e validamos diferentes modelos, totalizando **300 execuções**.
+Na sequência, o bayesian search foi implementado com base nas combinações de hiperparâmetros mais promissoras do grid search, em uma tentativa de refinar a rede. Nesse ponto, decidimos fixar o tamanho do estado oculto em 20, baseando-nos nas descobertas do grid search e na sintonia com o tamanho de entrada de dados (20 dias úteis). Ao longo de **100 configurações** de redes, avaliamos e validamos diferentes modelos, totalizando **300 execuções**.
 
 Um resumo dos testes encontra-se na tabela abaixo:
 
 | Hiperparâmetro | Grid Search | Bayesian Search |
 |----------------|-------------|-----------------|
-| Tamanho do Estado Oculto | 10, 20, 50, 100 | Não testado |
-| Taxa de Aprendizado | 0,001; 0,01; 0,1 | 0,0001 a 0,01 |
-| Tamanho do Lote | 64, 128, 256, 512 | 64, 128, 256, 512, 1024 |
-| Taxa de Dropout | Não testado | 0% a 30% |
+| Tamanho do Estado Oculto | 10, **20**, 50, 100 | Não testado |
+| Taxa de Aprendizado | **0,001**; 0,01; 0,1 | 0,0001 a 0,01 (**0,00018**) |
+| Tamanho do Lote | 64, 128, **256**, 512 | 64, **128**, 256, 512, 1024 |
+| Taxa de Dropout | Não testado | 0% a 30% (**12,241%**) |
 
 ## 🧠 Rede & Treinamento
 
-A arquitetura proposta para o modelo de previsão do índice S&P 500 incorpora um total de **20 células LSTM**, em consonância com a janela de 20 dias que é analisada. Isto é, para uma janela móvel de 20 dias, são lidos [OHLC](https://www.investopedia.com/terms/o/ohlcchart.asp) + Fechamento Ajustado + Volume (quantidades), para então predizer o fechamento do 21º dia.
+A arquitetura proposta para o modelo de previsão do índice S&P 500 incorpora um total de **20 células LSTM**, isto é, para uma janela móvel de 20 dias são lidos [OHLC](https://www.investopedia.com/terms/o/ohlcchart.asp), fechamento ajustado e volume (em quantidades), para então se predizer o fechamento do 21º dia.
 
 ![modelo](https://i.ibb.co/jDRtvMg/modelo.png)
 
-Como msotra imagem anterior, após o processamento pelas células LSTM, as saídas são submetidas ao mecanismo de *[soft attention](https://stackoverflow.com/questions/35549588/soft-attention-vs-hard-attention)*. Esse mecanismo avalia as contribuições de cada célula LSTM e pondera sua influência, permitindo que a importância de momentos distintos no tempo seja diferenciada, ao invés de focar apenas na informação mais recente. Isso se baseia na premissa de que eventos passados dentro da janela de tempo podem ter relevância semelhante ou até maior do que os mais recentes.
+Como mostra a imagem anterior, após o processamento pelas células LSTM, as saídas são submetidas ao mecanismo de *[soft attention](https://stackoverflow.com/questions/35549588/soft-attention-vs-hard-attention)*. Esse mecanismo avalia as contribuições de cada célula LSTM e pondera sua influência, permitindo que a importância de momentos distintos no tempo seja diferenciada, ao invés de focar apenas na informação mais recente. Isso se baseia na premissa de que eventos passados dentro da janela de tempo podem ter relevância semelhante ou até maior do que os mais recentes.
 
-A "camada de atenção" então agrega as saídas das células LSTM ponderadas em um vetor de contexto que concentra as informações relevantes detectadas pela rede. Esse vetor de contexto é então passado por uma camada de [dropout](https://towardsdatascience.com/dropout-in-neural-networks-47a162d621d9#waht-is-a-dropout), com uma taxa de desativação de 12,241%, antes de ser apresentado à última camada da rede.
+A "camada de atenção" então agrega as saídas das células LSTM ponderadas em um vetor de contexto que concentra as informações relevantes detectadas pela rede. Esse vetor de contexto é passado por uma camada de [dropout](https://towardsdatascience.com/dropout-in-neural-networks-47a162d621d9#waht-is-a-dropout), com uma taxa de desativação de 12,241%, antes de ser apresentado à última camada da rede.
 
-A fase final da arquitetura é composta por uma camada densa com um único neurônio, cuja **função de ativação linear** é adequada para tarefas de regressão como a previsão de índices de ações. Esse neurônio processa o vetor e produz o output final da rede: a previsão do valor de fechamento do S&P 500.
+A etapa final do modelo é composta por uma camada densa com um único neurônio, cuja **função de ativação linear** é adequada para tarefas de regressão como a previsão de índices de ações. Esse neurônio processa o vetor e produz o *output* final da rede: a previsão do valor de fechamento do S&P 500.
 
 Por fim, o treinamento da rede ocorre ao longo de **2000 epochs** com um **batch size de 128**. O algoritmo **[ADAM](https://medium.com/@LayanSA/complete-guide-to-adam-optimization-1e5f29532c3d)** é o escolhido para otimização, operando com uma **taxa de aprendizado de 0,00018** - esses parâmetros foram selecionados com base nos resultados da busca em grid, da busca bayesiana e da análise da curva de aprendizado.
 
 ## 📈 Resultados
 
-A seção de resultados se prolonga por algumas dezenas de páginas da monografia, então, não sendo pertinente trazer todos os resultados, abordamos aqui um recorte conveniente do que alcançamos com o modelo.
+> [!NOTE]
+> A seção de resultados se prolonga por algumas dezenas de páginas da monografia, então, não sendo pertinente trazer todos os resultados, abordamos aqui um recorte conveniente do que alcançamos com o modelo.
 
 Qualitativamente, os resultados no conjunto de teste e o retorno acumulado ao longo do período são bastante fidedignos ao que se observou no mercado para à época:
 
@@ -144,7 +145,7 @@ Qualitativamente, os resultados no conjunto de teste e o retorno acumulado ao lo
   <img src="https://i.ibb.co/mhkQhh6/return-results.png" alt="return-results" width="350px" />
 </p>
 
-Optamos ainda por fazer um estudo comparativo do mecanismo de atenção, testando variações desse: um rede sem atenção, uma rede com a atenção como proposta no artigo de referência (benchmark) e a "atenção clássica", proposta no artigo inaugural [Attention Is All You Need](https://arxiv.org/abs/1706.03762):
+Optamos ainda por fazer um estudo comparativo do mecanismo de atenção, testando variações desse: uma rede sem atenção, uma rede com a atenção como proposta no artigo de referência (benchmark) e a "atenção clássica", proposta no artigo inaugural [Attention Is All You Need](https://arxiv.org/abs/1706.03762):
 
 <p align="center">
   <img src="https://i.ibb.co/TkDq633/attention-results.png" alt="attention-results" width="900px" />
@@ -191,7 +192,7 @@ Constatamos que o modelo de fato parece seguir muito bem as oscilações, preven
 * Dado que o índice subiu, acertamos **84,72%** das vezes.
 * Dado que o índice caiu, acertamos **80,43%** das vezes.
 
-Frente a esses resultados, optamos então por tentar validar o modelo em uma abordagem um pouco mais prática, donde surge a iniciativa de aplicar estratégias de gestão de banca para operar no mercado tendo em vista as previsões. Foram exploradas diversas estratégias (Martingale, Paroli, D'Alembert, etc.) em um ambiente simulado simplificado, cujas hipóteses foram:
+Frente a esses resultados, optamos então por tentar validar o modelo em uma abordagem um pouco mais prática, donde surge a iniciativa de aplicar estratégias de gestão de banca para operar no mercado considerando as previsões. Foram exploradas diversas estratégias ([Martingale, Paroli, D'Alembert, etc.](https://betandbeat.com/betting/systems/#martingale)) em um ambiente simulado simplificado, cujas hipóteses adotadas foram:
 
 1. Livre de custos
 2. Liquidez e volume suficientes no mercado
@@ -205,21 +206,31 @@ Destarte, mediante a previsão do modelo e a estratégia de gestão escolhida, o
   <img src="https://i.ibb.co/0KZDTdk/paroli-results.png" alt="paroli-results" width="600px" />
 </p>
 
-Finalmente, como um todo, o quadro de resultados da gestão de banca fica expresso por:
+Finalmente, o quadro de resultados por estratégia de gestão de banca fica expresso por:
 
 <p align="center">
   <img src="https://i.ibb.co/DYxjYSs/bet-results.png" alt="bet-results" width="700px" />
 </p>
 
+Embora os resultados sejam promissores, em especial o de estratégias mais agressivas quanto ao retorno potencial, elas também revelam uma exposição exagerada desse operador, que acabou se beneficiado de um período de mercado particularmente favorável, mas que possivelmente não resistiria a momentos de crise.
+
+Diante disso, concluímos que estratégias de gestão de risco moderadas, como a Propocional de 25%, são mais factíveis, tanto em retornos quanto em exposição, equilibrando melhor o potencial de lucro com a minimização de riscos.
+
 ## 🌎 Aplicação
 
-Como um todo, a implementação do projeto pode ser segmentada entre duas grandes frentes: o **modelo**, que compreende basicamente a tudo que fora exposto até aqui, como a rede, o treinamento, as validações técnicas e práticas, etc. Em paralelo, existe ainda a **aplicação**: uma plataforma web, hospedada em um outro [repositório dedicado](https://github.com/gvmossato/alstm-front), para proporcionar uma interface intuitiva o suficiente a fim de permitir que usuários comuns pudessem usufruir das predições do modelo sem conhecimento técnico em programação.
+Como um todo, a implementação do projeto pode ser segmentada entre duas grandes frentes:
+
+1. **Modelo**, que compreende basicamente a tudo que fora exposto até aqui, como a rede, o treinamento, as validações técnicas e práticas, etc.
+
+2. **Aplicação**, uma plataforma web, hospedada em um outro [repositório dedicado](https://github.com/gvmossato/alstm-front), para proporcionar uma interface intuitiva e acessível o suficiente a fim de permitir que usuários comuns pudessem usufruir das predições do modelo sem conhecimento técnico em programação.
+
+> TODO: add repo image
 
 A aplicação permaneceu operante até meados de abril de 2024, sendo incorporados os dados mais recentes disponíveis à época a cada **seis meses**, em treinamentos incrementais automáticos com **15 epochs** e integração ao [IBM Cloudant](https://www.ibm.com/br-pt/products/cloudant), provedor do banco de dados NoSQL utilizado.
 
 ## 👨‍💻 Uso & Código
 
-Para executar o **modelo** e definir opções específicas de ajuste de parâmetros e carregamento de pesos de sessões de treinamento anteriores (se necessário), utilize:
+Para executar o **modelo** carregando pesos de sessões de treinamento anteriores (se necessário) ou definir testes para ajustes de hiperparâmetros, utilize:
 
 ```css
 poetry run model [-t {grid,bayes}] [-w]
@@ -229,9 +240,9 @@ Parâmetros opcionais:
 
 * `-t`, `--tuning`: especifica o método de otimização a ser executado. Se não especificado, o ajuste de parâmetros não será realizado. As configurações para cada tipo de ajuste devem ser definidas diretamente no código. Aceita:
 
-  * `grid`: utiliza o Grid Search para otimizar os parâmetros.
+  * `grid`: utiliza o grid search para otimizar os parâmetros.
 
-  * `bayes`: utiliza o Bayesian Search para otimizar os parâmetros.
+  * `bayes`: utiliza o bayesian search para otimizar os parâmetros.
 
 * `-w`, `--load-weights`: carrega os pesos salvos da sessão de treinamento mais recente.
 
@@ -239,7 +250,7 @@ Parâmetros opcionais:
 
 <br />
 
-Para executar a **aplicação** para realizar previsões com os dados mais recentes disponíveis, sincronização com a nuvem e treinamentos incrementais (se necessário), utilize:
+Para executar a **aplicação** para realizar previsões com os dados mais recentes disponíveis, sincronização com a nuvem e treinamentos incrementais automáticos (se necessário), utilize:
 
 ```css
 poetry run app
@@ -249,7 +260,7 @@ Note que para integração com o banco de dados será necessário especificar as
 
 ***
 
-Em relação ao código, a árvore de arquivos do projeto está organizada como:
+Já com relação ao código em si, a árvore de arquivos do projeto está organizada como:
 
 ```
 📦alstm_stock_market
@@ -276,15 +287,15 @@ Em relação ao código, a árvore de arquivos do projeto está organizada como:
  ┗ 📜run.py
 ```
 
-Ela está dividida em módulos que concentram as distintas operações do código:
+Sua subdivisão em módulos concentra as distintas operações do código em diretórios dedicados:
 
 * `📂src/model/`: contém os arquivos referentes ao modelo em si, como arquitetura, hiperparâmetros da rede e métricas de avaliação. Na subpasta `weights` encontram-se os arquivos `.h5` com os pesos do modelo após treinamentos.
 
-* `📂src/app/`: contém a lógica que permite ao modelo ser executado em produção, conforme trabalhado na seção "Aplicação". As rotinas de treinamentos incrementais e comunicação com a nuvem (IBM Cloudant) encontram-se aqui.
+* `📂src/app/`: contém a lógica que permite ao modelo ser executado em produção, conforme trabalhado na seção <a href="#-aplicação">🌎 Aplicação</a>. As rotinas de treinamentos incrementais e comunicação com a nuvem — IBM Cloudant — também se encontram aqui.
 
 * `📂src/manager/`: contém os arquivos referentes à gestão de banca. Subdivisão do código implementada para avaliar o desempenho do modelo em um cenário ainda controlado, mas mais próximo da prática, operando com distintas estratégias frente às previsões.
 
-* `📂src/data/`: contém os arquivos referentes a todo o pipeline de dados exposto, capaz de lidar com cada um dos casos de uso esperados (treinamento inicial, treinamentos adicionais, uso em produção, etc.).
+* `📂src/data/`: contém os arquivos referentes a todo o pipeline de dados exposto, capaz de lidar com cada um dos casos de uso (treinamento inicial, treinamentos adicionais, uso em produção, etc.).
 
 * `📂src/helpers/`: contém os arquivos gerais e de uso compartilhado entre os demais módulos, funções e métodos auxiliares.
 
